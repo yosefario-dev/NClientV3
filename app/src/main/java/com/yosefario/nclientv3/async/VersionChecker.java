@@ -160,7 +160,7 @@ public class VersionChecker {
         if (finalBody == null) return;
         finalBody = finalBody
             .replace("\r\n", "\n")//Remove ugly newline
-            .replace("NClientV2 " + latestVersion, "")//remove version header
+            .replace("NClientV3 " + latestVersion, "")//remove version header
             .replaceAll("(\\s*\n\\s*)+", "\n")//remove multiple newline
             .replaceAll("\\(.*\\)", "").trim();//remove things between ()
         LogUtility.d("Evaluated: " + finalBody);
@@ -185,7 +185,7 @@ public class VersionChecker {
     }
 
     private void downloadVersion(String latestVersion) {
-        final File f = new File(Global.UPDATEFOLDER, "NClientV2_" + latestVersion + ".apk");
+        final File f = new File(Global.UPDATEFOLDER, "NClientV3_" + latestVersion + ".apk");
         if (f.exists()) {
             if (context.getSharedPreferences("Settings", 0).getBoolean("downloaded", false)) {
                 installApp(f);
