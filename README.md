@@ -1,77 +1,59 @@
-# NClientV2
+# NClientV3
 
-[![Github](https://img.shields.io/github/v/release/Dar9586/NClientV2.svg?logo=github)](https://github.com/Dar9586/NClientV2/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/com.dar.nclientv2)](https://f-droid.org/en/packages/com.dar.nclientv2/) ![Bitrise](https://img.shields.io/bitrise/0a79e29cfda80c5f?token=BrSKdUUfKb97MHigL9nA1w)
+A modernized, unofficial NHentai Android client.  
+Forked from [NClientV2](https://github.com/Dar9586/NClientV2) by Dar9586.
 
-An unofficial NHentai Android Client.
-This app  works for devices from API 14 (Android 4.0) and above.
-Releases: <https://github.com/Dar9586/NClientV2/releases>
+Releases: <https://github.com/yosefario-dev/NClientV3/releases>
 
-## Translation
+## What's changed from V2
 
-You can translate this app on [Crowdin](https://crowdin.com/project/nclientv2)
+- **Material 3 / Material You** design with dynamic colors
+- **Fixed image loading** — nhentai CDN migrated to webp, added fallback chain
+- **Fixed for Android 15+** — edge-to-edge status bar, DrawerLayout scrim
+- **Gallery detail page** — collapsing toolbar with blurred cover art
+- **Fixed comments crash** — ClassCastException on ImageButton
+- **Black splash screen** — no more white flash
+- **Updated User-Agent** — works with current nhentai
+- **Removed ACRA crash reporting** — no data sent anywhere
+- **Updated build system** — AGP 8.5.2, Gradle 8.9, SDK 35
+- **Package renamed** to `com.yosefario.nclientv3`
 
-## API Features
+## Features
 
 - Browse main page
 - Search by query or tags
 - Include or exclude tags
 - Blur or hide excluded tags
-- Download manga
+- Download galleries
 - Favorite galleries
-- Enable PIN to access the app
-
-## Custom feature
-
+- PIN lock for privacy
 - Share galleries
 - Open in browser
-- Bookmark
-
-## App Screen
-
-Main page|Lateral menu
-:-:|:-:
-![Main page](https://raw.githubusercontent.com/Dar9586/NClientV2/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img1.jpg)|![Lateral menu](https://media.discordapp.net/attachments/608725424092086280/720369411030253578/Screenshot_20200610-230229_NClientV2.jpg?width=360&height=658)
-Search|Random manga
-![Search](https://media.discordapp.net/attachments/608725424092086280/720369411030253578/Screenshot_20200610-230229_NClientV2.jpg?width=360&height=658)|![Random manga](https://raw.githubusercontent.com/Dar9586/NClientV2/master/fastlane/metadata/android/en-US/images/phoneScreenshots/img4.jpg)
-
-## Contributors
-
-- [Still34](https://github.com/Still34) for code cleanup & Traditional Chinese translation
-- [TacoTheDank](https://github.com/TacoTheDank) for XML and gradle cleanup
-- [hmaltr](https://github.com/hmaltr) for Turkish translation and issue moderation
-- [ZerOri](https://github.com/ZerOri) and [linsui](https://github.com/linsui) for Chinese translation
-- [herrsunchess](https://github.com/herrsunchess) for German translation
-- [eme22](https://github.com/herrsunchess) for Spanish translation
-- [velosipedistufa](https://github.com/velosipedistufa) for Russian translation
-- [bottomtextboy](https://github.com/bottomtextboy) for Arabic translation
-- [MaticBabnik](https://github.com/MaticBabnik) for bug fixes
-- [DontPayAttention](https://github.com/DontPayAttention) for French translation
-- [kuragehimekurara1](https://github.com/kuragehimekurara1) for Japanese translation
-- [chayleaf](https://github.com/chayleaf) for Cloudflare bypass
-- [Atmosphelen](https://github.com/Atmosphelen) for Ukrainian translation
-
-
+- Bookmarks & History
 
 ## Libraries
 
-- PersistentCookieJar ([License](https://github.com/franmontiel/PersistentCookieJar/blob/master/LICENSE.txt))
-- OKHttp ([License](https://github.com/square/okhttp/blob/master/LICENSE.txt))
-- multiline-collapsingtoolbar ([License](https://github.com/opacapp/multiline-collapsingtoolbar/blob/master/LICENSE))
-- PhotoView ([License](https://github.com/chrisbanes/PhotoView/blob/master/LICENSE))
-- JSoup ([License](https://github.com/jhy/jsoup/blob/master/LICENSE))
-- ACRA ([License](https://github.com/ACRA/acra/blob/master/LICENSE))
-- Glide ([License](https://github.com/bumptech/glide/blob/master/LICENSE))
+- [PersistentCookieJar](https://github.com/franmontiel/PersistentCookieJar) (Apache 2.0)
+- [OkHttp](https://github.com/square/okhttp) (Apache 2.0)
+- [PhotoView](https://github.com/chrisbanes/PhotoView) (Apache 2.0)
+- [JSoup](https://github.com/jhy/jsoup) (MIT)
+- [Glide](https://github.com/bumptech/glide) (BSD/MIT/Apache)
+- [Material Components](https://github.com/material-components/material-components-android) (Apache 2.0)
 
-## Donation
+## Original Contributors
 
-Paypal|Liberapay|Bitcoin
-:-:|:-:|:-:
-[![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CVMR2STUSVE6U)|[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Dar9586/donate)|[113U1W3BxrAzyFWgP7HXqMfB3nF6MpHj6p](https://www.blockchain.com/btc/address/113U1W3BxrAzyFWgP7HXqMfB3nF6MpHj6p)
+- [Dar9586](https://github.com/Dar9586) — original author
+- [Still34](https://github.com/Still34) — code cleanup & Traditional Chinese
+- [TacoTheDank](https://github.com/TacoTheDank) — XML and Gradle cleanup
+- [hmaltr](https://github.com/hmaltr) — Turkish translation
+- [chayleaf](https://github.com/chayleaf) — Cloudflare bypass
+- And [many more](https://github.com/Dar9586/NClientV2#contributors)
 
 ## License
 
 ```text
    Copyright 2021 Dar9586
+   Copyright 2026 yosefario-dev
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

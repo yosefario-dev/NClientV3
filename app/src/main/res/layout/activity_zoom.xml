@@ -36,15 +36,15 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:context=".ZoomActivity"></androidx.viewpager2.widget.ViewPager2>
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:alpha="0.75"
-            android:background="?attr/colorPrimaryVariant"
+            android:alpha="0.85"
+            android:background="#E6000000"
             android:minHeight="?attr/actionBarSize"
             android:paddingTop="@dimen/status_bar_height"
-            android:theme="?attr/actionBarTheme"
+            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -53,8 +53,8 @@
             android:id="@+id/master_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:alpha="0.75"
-            android:background="?attr/colorPrimaryVariant"
+            android:alpha="0.85"
+            android:background="#E6000000"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -69,8 +69,8 @@
             android:id="@+id/view"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:alpha="0.75"
-            android:background="?attr/colorPrimaryVariant"
+            android:alpha="0.85"
+            android:background="#E6000000"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/toolbar"
             app:layout_constraintTop_toTopOf="parent" />

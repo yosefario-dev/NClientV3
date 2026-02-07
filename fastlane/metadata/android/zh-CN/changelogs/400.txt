@@ -1,0 +1,11 @@
+将 NClientV2 分支为 NClientV3
+- Material 3 / Material You 界面
+- 修复图片加载（CDN webp 迁移）
+- 修复 Android 15+ 状态栏颜色
+- 改进详情页面（折叠工具栏、模糊封面）
+- 修复评论崩溃
+- 黑色启动画面
+- 更新 User-Agent
+- 移除 ACRA 崩溃报告
+- 更新构建系统（AGP 8.5.2, SDK 35）
+- 包名更改为 com.yosefario.nclientv3

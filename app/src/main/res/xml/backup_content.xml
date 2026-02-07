@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <!--
-    ./adb shell bmgr fullbackup com.dar.nclientv2
-    ./adb shell bmgr restore com.dar.nclientv2
+    ./adb shell bmgr fullbackup com.yosefario.nclientv3
+    ./adb shell bmgr restore com.yosefario.nclientv3
     -->
     <include
         domain="sharedpref"

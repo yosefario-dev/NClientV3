@@ -4,22 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
-
-    <include layout="@layout/content_main" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-
         android:layout_height="wrap_content"
-        app:title="@string/app_name">
+        android:fitsSystemWindows="true"
+        app:liftOnScroll="true">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
             app:title="@string/app_name" />
     </com.google.android.material.appbar.AppBarLayout>
 
+    <include layout="@layout/content_main" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

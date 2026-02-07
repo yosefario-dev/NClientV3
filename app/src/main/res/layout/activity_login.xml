@@ -7,7 +7,7 @@
     android:gravity="center_horizontal"
     tools:context=".LoginActivity">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,7 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <view class="com.dar.nclientv2.components.views.CFTokenView$CFTokenWebView"
+    <view class="com.yosefario.nclientv3.components.views.CFTokenView$CFTokenWebView"
         android:id="@+id/webView"
         android:layout_width="0dp"
         android:layout_height="0dp"

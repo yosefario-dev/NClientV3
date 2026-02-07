@@ -1,69 +1,113 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion '30.0.3'
+    compileSdk 35
+    signingConfigs {
+        release {
+            storeFile file('../nclientv3-release.keystore')
+            storePassword System.getenv('STORE_PASSWORD') ?: 'nclientv3'
+            keyAlias System.getenv('KEY_ALIAS') ?: 'nclientv3'
+            keyPassword System.getenv('KEY_PASSWORD') ?: 'nclientv3'
+        }
+    }
     defaultConfig {
-        applicationId "com.dar.nclientv2"
-        minSdkVersion 14
-        targetSdkVersion 29
-        versionCode 305
-        multiDexEnabled true
-        versionName "3.0.5-stable"
+        applicationId "com.yosefario.nclientv3"
+        minSdk 24
+        targetSdk 35
+        versionCode 400
+        versionName "4.0.0-alpha01"
         vectorDrawables.useSupportLibrary true
         proguardFiles 'proguard-rules.pro'
     }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             versionNameSuffix "-release"
-            resValue "string", "app_name", "NClientV2"
+            resValue "string", "app_name", "NClientV3"
         }
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            resValue "string", "app_name", "NClientV2 Debug"
+            resValue "string", "app_name", "NClientV3 Debug"
         }
     }
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
     lint {
         abortOnError false
         checkReleaseBuilds false
     }
-    namespace 'com.dar.nclientv2'
+    namespace 'com.yosefario.nclientv3'
 }
 
 dependencies {
-// AndroidX
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.fragment:fragment:1.5.6'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'androidx.viewpager2:viewpager2:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.3.0'
-    implementation 'com.google.android.material:material:1.9.0'
+    // Kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 
-// Other
-    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.12.12'//Because of min SDK
+    // AndroidX Core
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.fragment:fragment-ktx:1.8.5'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.7'
+
+    // AndroidX UI
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+
+    // Material Design 3
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // Navigation
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.8.4'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.8.4'
+
+    // Room Database
+    implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+    kapt 'androidx.room:room-compiler:2.6.1'
+
+    // Networking
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.12.0'
     implementation 'com.github.franmontiel:PersistentCookieJar:v1.0.1'
-    //implementation 'com.github.chrisbanes:PhotoView:2.3.0'
-    implementation 'org.jsoup:jsoup:1.16.1'
-    implementation 'ch.acra:acra-core:5.7.0'
-    implementation('com.github.bumptech.glide:glide:4.15.1') {
+    implementation 'org.jsoup:jsoup:1.18.1'
+
+    // Image Loading
+    implementation('com.github.bumptech.glide:glide:4.16.0') {
         exclude group: "com.android.support"
     }
-    implementation "androidx.multidex:multidex:2.0.1"
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
-    implementation 'com.github.yukuku:ambilwarna:2.0.1'
-    implementation 'me.zhanghai.android.fastscroll:library:1.2.0'
+    kapt 'com.github.bumptech.glide:compiler:4.16.0'
+    // Custom OkHttp integration in components/classes/integration/ replaces library module
+    // to share cookies & interceptors with main app OkHttpClient
 
-    implementation 'net.opacapp:multiline-collapsingtoolbar:27.1.1'
+    // PhotoView (replace vendored copy)
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+
+
+    // UI Extras
+    implementation 'com.github.yukuku:ambilwarna:2.0.1'
+    implementation 'me.zhanghai.android.fastscroll:library:1.3.0'
     implementation 'com.zeugmasolutions.localehelper:locale-helper-android:1.5.1'
 }

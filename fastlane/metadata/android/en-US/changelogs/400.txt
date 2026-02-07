@@ -1,0 +1,11 @@
+Fork of NClientV2 as NClientV3
+- Material 3 / Material You UI
+- Fixed image loading (CDN webp migration)
+- Fixed status bar color on Android 15+
+- Fixed gallery detail page (collapsing toolbar, blurred cover)
+- Fixed comments crash
+- Black splash screen
+- Updated User-Agent
+- Removed ACRA crash reporting
+- Updated build system (AGP 8.5.2, SDK 35)
+- Package renamed to com.yosefario.nclientv3
