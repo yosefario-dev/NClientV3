@@ -1,0 +1,11 @@
+NClientV2'nin NClientV3 olarak çatallanması
+- Material 3 / Material You arayüzü
+- Görüntü yükleme düzeltmesi (CDN webp geçişi)
+- Android 15+ durum çubuğu düzeltmesi
+- Geliştirilmiş detay sayfası (katlanır araç çubuğu, bulanık kapak)
+- Yorum çökme düzeltmesi
+- Siyah başlangıç ekranı
+- Güncellenmiş User-Agent
+- ACRA çökme raporlama kaldırıldı
+- Derleme sistemi güncellendi (AGP 8.5.2, SDK 35)
+- Paket com.yosefario.nclientv3 olarak yeniden adlandırıldı

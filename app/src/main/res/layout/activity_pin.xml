@@ -275,7 +275,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:text="@string/insert_pin"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
 
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

@@ -1,18 +1,24 @@
-An unofficial NHentai Android Client.
-This app works for devices from API 14 (Android 4.0) and above.
+A modernized, unofficial NHentai Android client.
+Forked from NClientV2 by Dar9586, updated for modern Android.
 
-API Features
+Requires Android 7.0 (API 24) and above.
 
+Features
  - Browse main page
  - Search by query or tags
  - Include or exclude tags
  - Blur or hide excluded tags
- - Download manga
+ - Download galleries
  - Favorite galleries
- - Enable PIN to access the app
-
-Custom feature
-
+ - PIN lock for privacy
  - Share galleries
  - Open in browser
- - Bookmark
+ - Bookmarks
+ - History
+
+What's new in V3
+ - Material 3 / Material You design
+ - Fixed for Android 15+ (edge-to-edge, status bar)
+ - Fixed CDN webp image loading
+ - Updated build system and dependencies
+ - Removed crash reporting / tracking

@@ -1,18 +1,24 @@
-Un client non ufficiale di NHentai.
-Quest'app funziona per dispositivi dall'API 14 (Android 4.0) e superiori.
+Un client Android NHentai modernizzato e non ufficiale.
+Fork di NClientV2 di Dar9586, aggiornato per Android moderno.
 
-Funzionalità:
+Richiede Android 7.0 (API 24) e superiore.
 
- - Naviga tra le gallerie
- - Cerca gallerie
+Funzionalità
+ - Sfoglia la pagina principale
+ - Cerca per query o per tag
  - Includi o escludi tag
- - Sfoca o nascondi tag
- - Download dei manga
- - Gallerie preferiti
- - Abilita PIN per accedere l'app
-
-Custom feature
-
+ - Sfoca o nascondi i tag esclusi
+ - Scarica gallerie
+ - Gallerie preferite
+ - Blocco con PIN
  - Condividi gallerie
- - Apri in un browser
+ - Apri nel browser
  - Segnalibri
+ - Cronologia
+
+Novità nella V3
+ - Design Material 3 / Material You
+ - Correzione per Android 15+ (edge-to-edge, barra di stato)
+ - Correzione del caricamento immagini CDN webp
+ - Aggiornamento del sistema di build e delle dipendenze
+ - Rimosso il report dei crash / tracciamento

@@ -1,0 +1,11 @@
+Fork de NClientV2 en NClientV3
+- Interface Material 3 / Material You
+- Correction du chargement des images (migration CDN webp)
+- Correction de la barre d'état sur Android 15+
+- Page de détail améliorée (barre d'outils pliable, couverture floue)
+- Correction du crash des commentaires
+- Écran de démarrage noir
+- User-Agent mis à jour
+- Rapport de crash ACRA supprimé
+- Système de build mis à jour (AGP 8.5.2, SDK 35)
+- Package renommé en com.yosefario.nclientv3
