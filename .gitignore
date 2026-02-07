@@ -14,3 +14,4 @@ output.json
 .externalNativeBuild
 /crowdin.properties
 
+nclientv3-release.keystore

@@ -1,18 +1,24 @@
-Resmi Olmayan NHentai Android Görüntüleyici
-Bu uygulama API 14 (Android 4.0) ve üzerinde çalışmaktadır.
+Modernize edilmiş, resmi olmayan NHentai Android istemcisi.
+Dar9586 tarafından yapılan NClientV2'nin çatalı, modern Android için güncellenmiştir.
 
-API Özellikleri
+Android 7.0 (API 24) ve üzeri gerektirir.
 
- - Ana sayfada gezinme
- - Etiket ve ya kelimelerle arama
- - Etiketketleri dahil edip dahil etmeme
- - Dahil edilmeyen etiketleri bulanıklaştırma ve ya gizleme
- - Manga indirme
- - Mangaları favoriye ekleme
+Özellikler
+ - Ana sayfayı gezin
+ - Sorgu veya etiketlerle arama
+ - Etiketleri dahil edin veya hariç tutun
+ - Hariç tutulan etiketleri bulanıklaştırın veya gizleyin
+ - Galeri indirin
+ - Favori galeriler
  - PIN kilidi
-
-Özel Özellikler
-
- - Mangaları Paylaşma
- - Tarayıcıda Açma
+ - Galeri paylaşın
+ - Tarayıcıda açın
  - Yer işaretleri
+ - Geçmiş
+
+V3'teki yenilikler
+ - Material 3 / Material You tasarım
+ - Android 15+ düzeltmesi (edge-to-edge, durum çubuğu)
+ - CDN webp görüntü yükleme düzeltmesi
+ - Derleme sistemi ve bağımlılıklar güncellendi
+ - Çökme raporlama / izleme kaldırıldı

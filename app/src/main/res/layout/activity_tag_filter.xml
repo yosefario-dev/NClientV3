@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/appbar_padding_top">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -21,13 +21,13 @@
             app:layout_scrollFlags="scroll|enterAlways"
             app:title="@string/app_name">
 
-        </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.MaterialToolbar>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimaryVariant"
+            android:background="?attr/colorSurface"
             app:tabMode="scrollable" />
     </com.google.android.material.appbar.AppBarLayout>
 

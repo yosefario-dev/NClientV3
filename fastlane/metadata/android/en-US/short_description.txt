@@ -1,1 +1,1 @@
-An unofficial NHentai Android Client.
+A modernized, unofficial NHentai Android client. Fork of NClientV2.
