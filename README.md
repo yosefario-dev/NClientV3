@@ -31,28 +31,28 @@
 
 | Change | Details |
 |--------|---------|
-| 🎨 **Material 3 / Material You** | Dynamic colors, updated theme across all screens |
-| 🖼️ **Fixed image loading** | nhentai CDN migrated to webp — added smart fallback chain |
-| 📱 **Android 15+ support** | Edge-to-edge display, status bar fixes |
-| 🔍 **Gallery detail redesign** | Collapsing toolbar with blurred cover art |
-| 💬 **Comments crash fix** | ClassCastException on ImageButton resolved |
-| 🌙 **Black splash screen** | No more white flash on launch |
-| 🌐 **Updated User-Agent** | Works with current nhentai |
-| 🔒 **No tracking** | Removed ACRA crash reporting — zero data sent |
-| ⚙️ **Modern build** | AGP 8.5.2, Gradle 8.9, SDK 35 |
+| **Material 3 / Material You** | Dynamic colors, updated theme across all screens |
+| **Fixed image loading** | nhentai CDN migrated to webp — added smart fallback chain |
+| **Android 15+ support** | Edge-to-edge display, status bar fixes |
+| **Gallery detail redesign** | Collapsing toolbar with blurred cover art |
+| **Comments crash fix** | ClassCastException on ImageButton resolved |
+| **Black splash screen** | No more white flash on launch |
+| **Updated User-Agent** | Works with current nhentai |
+| **No tracking** | Removed ACRA crash reporting — zero data sent |
+| **Modern build** | AGP 8.5.2, Gradle 8.9, SDK 35 |
 
 ## Features
 
-- 📖 Browse and search galleries
-- 🏷️ Search by tags with include/exclude filters
-- 🔇 Blur or hide excluded tags
-- ⬇️ Download galleries for offline reading
-- ❤️ Favorite galleries
-- 🔐 PIN lock for privacy
-- 🔀 Random gallery discovery
-- 📤 Share galleries & open in browser
-- 🔖 Bookmarks & history
-- 🌍 Multi-language support (EN, FR, IT, TR, ZH, DE, ES, JA, RU, UK, AR)
+- Browse and search galleries
+- Search by tags with include/exclude filters
+- Blur or hide excluded tags
+- Download galleries for offline reading
+- Favorite galleries
+- PIN lock for privacy
+- Random gallery discovery
+- Share galleries & open in browser
+- Bookmarks & history
+- Multi-language support (EN, FR, IT, TR, ZH, DE, ES, JA, RU, UK, AR)
 
 ## Download
 
