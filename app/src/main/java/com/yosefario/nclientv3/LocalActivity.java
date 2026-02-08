@@ -188,7 +188,7 @@ public class LocalActivity extends BaseActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle(R.string.choose_directory).setIcon(R.drawable.ic_folder);
         builder.setAdapter(adapter, (dialog, which) -> {
-            folder = new File(strings.get(which), "NClientV2");
+            folder = new File(strings.get(which), "NClientV3");
             new FakeInspector(this, folder).execute(this);
         }).setNegativeButton(R.string.cancel, null).show();
     }

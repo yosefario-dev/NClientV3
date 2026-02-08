@@ -1,0 +1,34 @@
+AntiFeatures:
+  NSFW:
+    en-US: This app provides access to adult content.
+  NonFreeNet:
+    en-US: This app relies on nhentai.net, a non-libre network service.
+Categories:
+  - Internet
+License: Apache-2.0
+AuthorName: yosefario-dev
+SourceCode: https://github.com/yosefario-dev/NClientV3
+IssueTracker: https://github.com/yosefario-dev/NClientV3/issues
+
+RepoType: git
+Repo: https://github.com/yosefario-dev/NClientV3.git
+
+Builds:
+  - versionName: 4.0.0-alpha01
+    versionCode: 400
+    commit: 4.0.0-alpha01
+    subdir: app
+    sudo:
+      - echo "deb https://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+      - update-alternatives --auto java
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: 22ec856249b5cc990573ce112ba21eee59b701d98ba3253e269cf8a0060dd12a
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 4.0.0-alpha01
+CurrentVersionCode: 400

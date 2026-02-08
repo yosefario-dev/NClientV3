@@ -260,7 +260,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     private void tryByAllPopular() {
         if (sortType != SortType.RECENT_ALL_TIME) {
             requestType = ApiRequestType.BYSEARCH;
-            query = "-nclientv2";
+            query = "-nclientv3";
         }
     }
 
