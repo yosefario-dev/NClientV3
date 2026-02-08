@@ -81,6 +81,8 @@ public class VersionChecker {
     }
 
     private static long extractVersion(String version, boolean parsePrerelease) {
+        // Strip build type suffixes first (-release, -debug)
+        version = version.replace("-release", "").replace("-debug", "");
         String suffix = "";
         int index = version.indexOf('-');
         if (index >= 0) {
@@ -90,7 +92,7 @@ public class VersionChecker {
         long base = Long.parseLong(version.replace(".", "")) * 100000L;
         if (!parsePrerelease || suffix.isEmpty()) {
             // No suffix means stable release, rank it highest
-            return suffix.isEmpty() ? base + 99999L : base;
+            return base + 99999L;
         }
         // Parse pre-release: alpha01=1000+N, beta01=2000+N, rc01=3000+N
         long suffixValue = 0;
@@ -101,7 +103,6 @@ public class VersionChecker {
         } else if (suffix.startsWith("rc")) {
             suffixValue = 3000 + parseSuffixNumber(suffix, 2);
         }
-        // Strip build type suffix (e.g. alpha02-release -> already handled by first dash split)
         return base + suffixValue;
     }
 
