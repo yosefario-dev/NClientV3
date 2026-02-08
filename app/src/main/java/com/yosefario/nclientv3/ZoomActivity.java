@@ -201,13 +201,13 @@ public class ZoomActivity extends GeneralActivity {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_VOLUME_UP:
                     up = true;
-                    changeClosePage(side);
-                    if (up && down) changeSide();
+                    if (down) changeSide();
+                    else if (event.getRepeatCount() == 0) changeClosePage(side);
                     return true;
                 case KeyEvent.KEYCODE_VOLUME_DOWN:
                     down = true;
-                    changeClosePage(!side);
-                    if (up && down) changeSide();
+                    if (up) changeSide();
+                    else if (event.getRepeatCount() == 0) changeClosePage(!side);
                     return true;
             }
         }
@@ -215,6 +215,8 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changeSide() {
+        up = false;
+        down = false;
         getSharedPreferences("Settings", 0).edit().putBoolean(VOLUME_SIDE_KEY, side = !side).apply();
         Toast.makeText(this, side ? R.string.next_page_volume_up : R.string.next_page_volume_down, Toast.LENGTH_SHORT).show();
     }

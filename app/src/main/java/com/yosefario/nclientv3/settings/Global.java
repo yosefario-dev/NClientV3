@@ -60,7 +60,7 @@ import okhttp3.OkHttpClient;
 
 public class Global {
     public static final String CHANNEL_ID1 = "download_gallery", CHANNEL_ID2 = "create_pdf", CHANNEL_ID3 = "create_zip";
-    private static final String MAINFOLDER_NAME = "NClientV2";
+    private static final String MAINFOLDER_NAME = "NClientV3";
     private static final String DOWNLOADFOLDER_NAME = "Download";
     private static final String SCREENFOLDER_NAME = "Screen";
     private static final String PDFFOLDER_NAME = "PDF";
