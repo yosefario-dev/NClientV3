@@ -68,7 +68,7 @@ public class VersionChecker {
                 downloadUrl = release.downloadUrl;
                 GitHubRelease finalRelease = release;
                 context.runOnUiThread(() -> {
-                    if (downloadUrl == null || extractVersion(actualVersionName) >= extractVersion(finalRelease.versionCode)) {
+                    if (downloadUrl == null || extractVersion(actualVersionName, withPrerelease) >= extractVersion(finalRelease.versionCode, withPrerelease)) {
                         if (!silent)
                             Toast.makeText(context, R.string.no_updates_found, Toast.LENGTH_SHORT).show();
                     } else {
@@ -80,10 +80,41 @@ public class VersionChecker {
         });
     }
 
-    private static int extractVersion(String version) {
+    private static long extractVersion(String version, boolean parsePrerelease) {
+        String suffix = "";
         int index = version.indexOf('-');
-        if (index >= 0) version = version.substring(0, index);
-        return Integer.parseInt(version.replace(".", ""));
+        if (index >= 0) {
+            suffix = version.substring(index + 1);
+            version = version.substring(0, index);
+        }
+        long base = Long.parseLong(version.replace(".", "")) * 100000L;
+        if (!parsePrerelease || suffix.isEmpty()) {
+            // No suffix means stable release, rank it highest
+            return suffix.isEmpty() ? base + 99999L : base;
+        }
+        // Parse pre-release: alpha01=1000+N, beta01=2000+N, rc01=3000+N
+        long suffixValue = 0;
+        if (suffix.startsWith("alpha")) {
+            suffixValue = 1000 + parseSuffixNumber(suffix, 5);
+        } else if (suffix.startsWith("beta")) {
+            suffixValue = 2000 + parseSuffixNumber(suffix, 4);
+        } else if (suffix.startsWith("rc")) {
+            suffixValue = 3000 + parseSuffixNumber(suffix, 2);
+        }
+        // Strip build type suffix (e.g. alpha02-release -> already handled by first dash split)
+        return base + suffixValue;
+    }
+
+    private static int parseSuffixNumber(String suffix, int prefixLength) {
+        try {
+            String num = suffix.substring(prefixLength);
+            // Strip any trailing build type after a dash (e.g. "02-release")
+            int dash = num.indexOf('-');
+            if (dash >= 0) num = num.substring(0, dash);
+            return Integer.parseInt(num);
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            return 0;
+        }
     }
 
     private static GitHubRelease parseVersionJson(JsonReader jr, boolean withPrerelease) throws IOException {
