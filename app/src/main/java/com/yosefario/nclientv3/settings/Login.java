@@ -35,7 +35,11 @@ public class Login {
     public static void initLogin(@NonNull Context context) {
         SharedPreferences preferences = context.getSharedPreferences("Settings", 0);
         accountTag = preferences.getBoolean(context.getString(R.string.key_use_account_tag), false);
-        BASE_HTTP_URL = HttpUrl.get(Utility.getBaseUrl());
+        if (Global.isSourceConfigured()) {
+            BASE_HTTP_URL = HttpUrl.get(Utility.getBaseUrl());
+        } else {
+            BASE_HTTP_URL = null;
+        }
     }
 
     public static boolean useAccountTag() {
@@ -53,6 +57,7 @@ public class Login {
 
 
     public static void removeCloudflareCookies() {
+        if (BASE_HTTP_URL == null) return;
         CustomCookieJar cookieJar = (CustomCookieJar) Global.client.cookieJar();
         List<Cookie> cookies = cookieJar.loadForRequest(BASE_HTTP_URL);
         for (Cookie cookie : cookies) {
@@ -110,6 +115,7 @@ public class Login {
     }
 
     public static boolean hasCookie(String name) {
+        if (BASE_HTTP_URL == null) return false;
         List<Cookie> cookies = Global.client.cookieJar().loadForRequest(BASE_HTTP_URL);
         for (Cookie c : cookies) {
             if (c.name().equals(name)) {
@@ -120,6 +126,7 @@ public class Login {
     }
 
     public static boolean isLogged(@Nullable Context context) {
+        if (BASE_HTTP_URL == null) return false;
         List<Cookie> cookies = Global.client.cookieJar().loadForRequest(BASE_HTTP_URL);
         LogUtility.d("Cookies: " + cookies);
         if (hasCookie(LOGIN_COOKIE)) {

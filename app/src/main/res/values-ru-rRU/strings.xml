@@ -64,7 +64,7 @@
     <string name="writing_pdf">Запись PDF</string>
     <string name="navigation_drawer_open">Открыть панель навигации</string>
     <string name="navigation_drawer_close">Закрыть панель навигации</string>
-    <string name="nav_header_subtitle">Неофициальный клиент NHentai</string>
+    <string name="nav_header_subtitle">Клиент манги</string>
     <string name="change_page">Сменить страницу</string>
     <string name="prev_page">Предыдущая страница</string>
     <string name="next_page">Следующая страница</string>

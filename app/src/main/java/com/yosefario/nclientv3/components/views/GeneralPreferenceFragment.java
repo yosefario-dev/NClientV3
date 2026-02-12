@@ -15,7 +15,10 @@ import android.webkit.CookieManager;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
+import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SeekBarPreference;
 
@@ -251,15 +254,55 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             return true;
         });
 
-        ListPreference mirror = findPreference(getString(R.string.key_site_mirror));
-        mirror.setSummary(
-            act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
-                .getString(getString(R.string.key_site_mirror), Utility.ORIGINAL_URL)
-        );
+        EditTextPreference mirror = findPreference(getString(R.string.key_site_mirror));
+        String currentMirror = act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            .getString(getString(R.string.key_site_mirror), "");
+        mirror.setSummary(currentMirror.isEmpty() ? getString(R.string.source_not_configured) : currentMirror);
         mirror.setOnPreferenceChangeListener((preference, newValue) -> {
-            preference.setSummary(newValue.toString());
-            return true;
+            String value = newValue.toString().trim()
+                .replaceAll("^https?://", "")
+                .replaceAll("/+$", "")
+                .trim();
+            if (value.isEmpty()) {
+                // Allow clearing the source
+                preference.setSummary(getString(R.string.source_not_configured));
+                act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
+                    .putString(getString(R.string.key_site_mirror), "").apply();
+                updateSourceDependentVisibility(false);
+                return false; // we saved manually with cleaned value
+            }
+            if (!value.equalsIgnoreCase(Utility.ORIGINAL_URL)) {
+                Toast.makeText(act, R.string.source_not_supported, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            // Save the cleaned value
+            act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
+                .putString(getString(R.string.key_site_mirror), value).apply();
+            preference.setSummary(value);
+            updateSourceDependentVisibility(true);
+            return false; // we saved manually with cleaned value
         });
+
+        // Hide source-dependent categories when no source is configured
+        updateSourceDependentVisibility(!currentMirror.isEmpty());
+    }
+
+    private void updateSourceDependentVisibility(boolean visible) {
+        // Hide/show entire preference categories that depend on a configured source
+        PreferenceCategory navCategory = findPreference("category_navigation");
+        PreferenceCategory imgCategory = findPreference("category_images");
+        PreferenceCategory searchCategory = findPreference("category_search");
+        if (navCategory != null) navCategory.setVisible(visible);
+        if (imgCategory != null) imgCategory.setVisible(visible);
+        if (searchCategory != null) searchCategory.setVisible(visible);
+
+        // Hide individual source-dependent prefs in Global settings
+        Preference userAgent = findPreference(getString(R.string.key_user_agent));
+        Preference clearCookies = findPreference(getString(R.string.key_cookie));
+        Preference titleType = findPreference(getString(R.string.key_title_type));
+        if (userAgent != null) userAgent.setVisible(visible);
+        if (clearCookies != null) clearCookies.setVisible(visible);
+        if (titleType != null) titleType.setVisible(visible);
     }
 
     public void manageCustomPath() {

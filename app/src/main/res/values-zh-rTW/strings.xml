@@ -64,7 +64,7 @@
     <string name="writing_pdf">正在寫入 PDF</string>
     <string name="navigation_drawer_open">打開側邊欄</string>
     <string name="navigation_drawer_close">關閉側邊欄</string>
-    <string name="nav_header_subtitle">NHentai非官方用戶端</string>
+    <string name="nav_header_subtitle">漫畫客戶端</string>
     <string name="change_page">跳頁：</string>
     <string name="prev_page">上一頁</string>
     <string name="next_page">下一頁</string>

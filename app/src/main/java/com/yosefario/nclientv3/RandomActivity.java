@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import androidx.core.widget.ImageViewCompat;
@@ -34,6 +35,14 @@ public class RandomActivity extends GeneralActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Guard against access when no source is configured
+        if (!Global.isSourceConfigured()) {
+            Toast.makeText(this, R.string.source_configure_first, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         //Global.initActivity(this);
         setContentView(R.layout.activity_random);
         loader = new RandomLoader(this);

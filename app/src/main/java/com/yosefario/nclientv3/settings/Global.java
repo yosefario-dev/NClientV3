@@ -278,8 +278,9 @@ public class Global {
     }
 
     public static void initFromShared(@NonNull Context context) {
-        Login.initLogin(context);
         SharedPreferences shared = context.getSharedPreferences("Settings", 0);
+        mirror = shared.getString(context.getString(R.string.key_site_mirror), "");
+        Login.initLogin(context);
         CookieSyncManager.createInstance(context);
         initHttpClient(context);
         initTitleType(context);
@@ -290,7 +291,6 @@ public class Global {
         shared.edit().remove("local_sort").apply();
         localSortType = new LocalSortType(shared.getInt(context.getString(R.string.key_local_sort), 0));
         useRtl = shared.getBoolean(context.getString(R.string.key_use_rtl), false);
-        mirror = shared.getString(context.getString(R.string.key_site_mirror), Utility.ORIGINAL_URL);
         keepHistory = shared.getBoolean(context.getString(R.string.key_keep_history), true);
         removeAvoidedGalleries = shared.getBoolean(context.getString(R.string.key_remove_ignored), true);
         invertFix = shared.getBoolean(context.getString(R.string.key_inverted_fix), true);
@@ -355,6 +355,10 @@ public class Global {
         return mirror;
     }
 
+    public static boolean isSourceConfigured() {
+        return mirror != null && !mirror.isEmpty();
+    }
+
     public static DataUsageType getDownloadPolicy() {
         switch (NetworkUtil.getType()) {
             case WIFI:
@@ -388,8 +392,10 @@ public class Global {
         client = builder.build();
         client.dispatcher().setMaxRequests(25);
         client.dispatcher().setMaxRequestsPerHost(25);
-        for (Cookie cookie : client.cookieJar().loadForRequest(Login.BASE_HTTP_URL)) {
-            LogUtility.d("Cookie: " + cookie);
+        if (Login.BASE_HTTP_URL != null) {
+            for (Cookie cookie : client.cookieJar().loadForRequest(Login.BASE_HTTP_URL)) {
+                LogUtility.d("Cookie: " + cookie);
+            }
         }
         Login.isLogged(context);
     }

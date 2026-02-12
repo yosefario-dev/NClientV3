@@ -64,7 +64,7 @@
     <string name="writing_pdf">正在写入 PDF</string>
     <string name="navigation_drawer_open">打开导航菜单</string>
     <string name="navigation_drawer_close">关闭导航菜单</string>
-    <string name="nav_header_subtitle">NHentai 非官方客户端</string>
+    <string name="nav_header_subtitle">漫画客户端</string>
     <string name="change_page">跳转页面：</string>
     <string name="prev_page">上一页</string>
     <string name="next_page">下一页</string>

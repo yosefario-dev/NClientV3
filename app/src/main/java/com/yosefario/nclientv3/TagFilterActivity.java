@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -42,6 +43,14 @@ public class TagFilterActivity extends GeneralActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Guard against deep links when no source is configured
+        if (!Global.isSourceConfigured() && getIntent().getData() != null) {
+            Toast.makeText(this, R.string.source_configure_first, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         //Global.initActivity(this);
         setContentView(R.layout.activity_tag_filter);
 
