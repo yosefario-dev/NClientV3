@@ -1,1 +1,1 @@
-Un client Android NHentai modernizzato e non ufficiale. Fork di NClientV2.
+Un client manga configurabile per Android. Fork di NClientV2.

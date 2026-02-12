@@ -1,1 +1,1 @@
-Modernize edilmiş, resmi olmayan NHentai Android istemcisi. NClientV2'nin çatalı.
+Android için yapılandırılabilir bir manga istemcisi. NClientV2'nin çatalı.
