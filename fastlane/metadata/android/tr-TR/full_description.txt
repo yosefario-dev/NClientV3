@@ -1,7 +1,9 @@
-Modernize edilmiş, resmi olmayan NHentai Android istemcisi.
+Android için yapılandırılabilir bir manga istemcisi.
 Dar9586 tarafından yapılan NClientV2'nin çatalı, modern Android için güncellenmiştir.
 
 Android 7.0 (API 24) ve üzeri gerektirir.
+
+Uygulama boş bir kabuk olarak gelir. Tüm işlevleri açmak için Ayarlar'da desteklenen bir kaynak yapılandırın.
 
 Özellikler
  - Ana sayfayı gezin
@@ -22,3 +24,4 @@ V3'teki yenilikler
  - CDN webp görüntü yükleme düzeltmesi
  - Derleme sistemi ve bağımlılıklar güncellendi
  - Çökme raporlama / izleme kaldırıldı
+ - Uygulama varsayılan olarak SFW boş kabuk olarak gelir
