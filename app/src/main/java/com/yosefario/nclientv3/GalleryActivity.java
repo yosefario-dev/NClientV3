@@ -85,6 +85,14 @@ public class GalleryActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         //Global.initActivity(this);
         setContentView(R.layout.activity_gallery);
+
+        // Guard against deep links when no source is configured
+        if (!Global.isSourceConfigured() && getIntent().getData() != null) {
+            Toast.makeText(this, R.string.source_configure_first, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         if (Global.isLockScreen())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 

@@ -17,6 +17,8 @@ import android.webkit.CookieManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -131,6 +133,8 @@ public class MainActivity extends BaseActivity
     private SortType temporaryType;
     private Snackbar snackbar = null;
     private PageSwitcher pageSwitcher;
+    private TextView emptyStateText;
+    private boolean sourceWasConfigured = false;
     private final InspectorV3.InspectorResponse
         resetDataset = new MainInspectorResponse() {
         @Override
@@ -153,9 +157,6 @@ public class MainActivity extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //load inspector
-        selectStartMode(getIntent(), getPackageName());
-        LogUtility.d("Main started with mode " + modeType);
         //init views and actions
         findUsefulViews();
         initializeToolbar();
@@ -163,20 +164,37 @@ public class MainActivity extends BaseActivity
         initializeRecyclerView();
         initializePageSwitcherActions();
         loadStringLogin();
-        refresher.setOnRefreshListener(() -> {
-            inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
-            if (Global.isInfiniteScrollMain()) inspector.setPage(1);
-            inspector.start();
-        });
 
-        manageDrawer();
-        setActivityTitle();
-        if (firstTime) checkUpdate();
-        if (inspector != null) {
-            inspector.start();
+        sourceWasConfigured = Global.isSourceConfigured();
+
+        if (sourceWasConfigured) {
+            //load inspector
+            selectStartMode(getIntent(), getPackageName());
+            LogUtility.d("Main started with mode " + modeType);
+            refresher.setOnRefreshListener(() -> {
+                inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
+                if (Global.isInfiniteScrollMain()) inspector.setPage(1);
+                inspector.start();
+            });
+            manageDrawer();
+            setActivityTitle();
+            if (firstTime) checkUpdate();
+            if (inspector != null) {
+                inspector.start();
+            } else {
+                LogUtility.e(getIntent().getExtras());
+            }
         } else {
-            LogUtility.e(getIntent().getExtras());
+            // No source configured — show empty shell
+            modeType = ModeType.NORMAL;
+            refresher.setVisibility(View.GONE);
+            pageSwitcher.setVisibility(View.GONE);
+            emptyStateText.setVisibility(View.VISIBLE);
+            refresher.setEnabled(false);
+            manageDrawer();
+            setActivityTitle();
         }
+        updateSourceDependentUI();
     }
 
     private void manageDrawer() {
@@ -265,7 +283,18 @@ public class MainActivity extends BaseActivity
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setNavigationOnClickListener(v -> finish());
         navigationView.setNavigationItemSelectedListener(this);
-        onlineFavoriteManager.setVisible(com.yosefario.nclientv3.settings.Login.isLogged());
+        onlineFavoriteManager.setVisible(Global.isSourceConfigured() && com.yosefario.nclientv3.settings.Login.isLogged());
+    }
+
+    private void updateSourceDependentUI() {
+        boolean configured = Global.isSourceConfigured();
+        Menu drawerMenu = navigationView.getMenu();
+        // Hide source-dependent drawer items
+        drawerMenu.findItem(R.id.random).setVisible(configured);
+        drawerMenu.findItem(R.id.tag_manager).setVisible(configured);
+        drawerMenu.findItem(R.id.action_login).setVisible(configured);
+        onlineFavoriteManager.setVisible(configured && com.yosefario.nclientv3.settings.Login.isLogged());
+        invalidateOptionsMenu();
     }
 
     public void setIdOpenedGallery(int idOpenedGallery) {
@@ -280,6 +309,7 @@ public class MainActivity extends BaseActivity
         refresher = findViewById(R.id.refresher);
         pageSwitcher = findViewById(R.id.page_switcher);
         drawerLayout = findViewById(R.id.drawer_layout);
+        emptyStateText = findViewById(R.id.empty_state_text);
         loginItem = navigationView.getMenu().findItem(R.id.action_login);
         onlineFavoriteManager = navigationView.getMenu().findItem(R.id.online_favorite_manager);
     }
@@ -527,11 +557,40 @@ public class MainActivity extends BaseActivity
             idOpenedGallery = -1;
         }
         loadStringLogin();
-        onlineFavoriteManager.setVisible(com.yosefario.nclientv3.settings.Login.isLogged());
+        onlineFavoriteManager.setVisible(Global.isSourceConfigured() && com.yosefario.nclientv3.settings.Login.isLogged());
         if (setting != null) {
             Global.initFromShared(this);//restart all settings
-            inspector = inspector.cloneInspector(this, resetDataset);
-            inspector.start();//restart inspector
+            boolean nowConfigured = Global.isSourceConfigured();
+            // If source was just configured, transition from empty state to full UI
+            if (!sourceWasConfigured && nowConfigured) {
+                sourceWasConfigured = true;
+                refresher.setVisibility(View.VISIBLE);
+                emptyStateText.setVisibility(View.GONE);
+                refresher.setEnabled(true);
+                refresher.setOnRefreshListener(() -> {
+                    inspector = inspector.cloneInspector(MainActivity.this, resetDataset);
+                    if (Global.isInfiniteScrollMain()) inspector.setPage(1);
+                    inspector.start();
+                });
+                useNormalMode();
+            }
+            // If source was cleared, transition to empty state
+            if (sourceWasConfigured && !nowConfigured) {
+                sourceWasConfigured = false;
+                refresher.setVisibility(View.GONE);
+                pageSwitcher.setVisibility(View.GONE);
+                emptyStateText.setVisibility(View.VISIBLE);
+                refresher.setEnabled(false);
+                updateSourceDependentUI();
+                adapter.restartDataset(new ArrayList<>());
+                setting = null;
+                invalidateOptionsMenu();
+                return;
+            }
+            if (nowConfigured && inspector != null) {
+                inspector = inspector.cloneInspector(this, resetDataset);
+                inspector.start();//restart inspector
+            }
             if (setting.theme != Global.getTheme() || !Objects.equals(setting.locale, Global.initLanguage(this))) {
                 RequestManager manager = GlideX.with(getApplicationContext());
                 if (manager != null) manager.pauseAllRequestsRecursive();
@@ -539,8 +598,11 @@ public class MainActivity extends BaseActivity
             }
             adapter.notifyDataSetChanged();//restart adapter
             adapter.resetStatuses();
-            showPageSwitcher(inspector.getPage(), inspector.getPageCount());//restart page switcher
+            if (inspector != null) {
+                showPageSwitcher(inspector.getPage(), inspector.getPageCount());//restart page switcher
+            }
             changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+            updateSourceDependentUI();
             setting = null;
         } else if (filteringTag) {
             inspector = InspectorV3.basicInspector(this, 1, resetDataset);
@@ -558,6 +620,15 @@ public class MainActivity extends BaseActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+
+        if (!Global.isSourceConfigured()) {
+            // Hide all toolbar items when no source is configured
+            for (int i = 0; i < menu.size(); i++) {
+                menu.getItem(i).setVisible(false);
+            }
+            return true;
+        }
+
         popularItemDispay(menu.findItem(R.id.by_popular));
 
         showLanguageIcon(menu.findItem(R.id.only_language));
