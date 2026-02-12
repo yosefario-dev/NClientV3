@@ -64,7 +64,7 @@
     <string name="writing_pdf">PDFを書く</string>
     <string name="navigation_drawer_open">ナビゲーションドロワーを開く</string>
     <string name="navigation_drawer_close">ナビゲーションドロワーを閉じる</string>
-    <string name="nav_header_subtitle">NHentaiの非公式Androidクライアントアプリ</string>
+    <string name="nav_header_subtitle">マンガクライアント</string>
     <string name="change_page">ページを変更する:</string>
     <string name="prev_page">前のページ</string>
     <string name="next_page">次のページ</string>

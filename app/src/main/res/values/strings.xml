@@ -127,7 +127,7 @@
     <string name="writing_pdf">Writing PDF</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_subtitle">NHentai unofficial client</string>
+    <string name="nav_header_subtitle">Manga client</string>
     <string name="change_page">Change page:</string>
     <string name="prev_page">Previous page</string>
     <string name="next_page">Next page</string>
@@ -330,7 +330,11 @@
     <string name="default_status_3">On Hold</string>
     <string name="default_status_4">Dropped</string>
     <string name="default_status_5">Plan to read</string>
-    <string name="title_site_mirror">Change site mirror</string>
+    <string name="title_site_mirror">Configure source</string>
+    <string name="source_not_configured">Not configured</string>
+    <string name="source_not_supported">This source is not supported yet</string>
+    <string name="configure_source_hint">Configure a source in Settings to get started</string>
+    <string name="source_configure_first">Configure a source first</string>
     <string name="disguise_app_in_drawer">Disguise app in drawer</string>
     <string name="summary_disguise_app">The app will be disguised as a calculator (experimental)</string>
     <string name="app_name_fake_calculator">Calculator</string>
@@ -383,9 +387,7 @@
         <item>dark</item>
     </string-array>
 
-    <string-array name="site_mirrors" translatable="false">
-        <item>nhentai.net</item>
-    </string-array>
+
 
     <string-array name="title_type_array">
         <item>English</item>
