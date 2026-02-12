@@ -1,1 +1,1 @@
-现代化的非官方 NHentai Android 客户端。基于 NClientV2 的分支。
+可配置的 Android 漫画客户端。基于 NClientV2 的分支。

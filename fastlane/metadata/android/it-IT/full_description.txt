@@ -1,7 +1,9 @@
-Un client Android NHentai modernizzato e non ufficiale.
+Un client manga configurabile per Android.
 Fork di NClientV2 di Dar9586, aggiornato per Android moderno.
 
 Richiede Android 7.0 (API 24) e superiore.
+
+L'app viene fornita come shell vuota. Configura una fonte supportata nelle impostazioni per sbloccare tutte le funzionalità.
 
 Funzionalità
  - Sfoglia la pagina principale
@@ -22,3 +24,4 @@ Novità nella V3
  - Correzione del caricamento immagini CDN webp
  - Aggiornamento del sistema di build e delle dipendenze
  - Rimosso il report dei crash / tracciamento
+ - L'app viene fornita come shell vuota SFW per impostazione predefinita

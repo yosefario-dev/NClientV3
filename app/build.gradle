@@ -16,8 +16,8 @@ android {
         applicationId "com.yosefario.nclientv3"
         minSdk 24
         targetSdk 35
-        versionCode 420
-        versionName "4.1.0-alpha01"
+        versionCode 421
+        versionName "4.1.0-alpha02"
         vectorDrawables.useSupportLibrary true
         proguardFiles 'proguard-rules.pro'
     }
@@ -39,6 +39,10 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+    }
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
