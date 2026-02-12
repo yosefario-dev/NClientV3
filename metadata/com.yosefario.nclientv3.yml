@@ -2,8 +2,6 @@ AntiFeatures:
   NonFreeNet:
     en-US: This app can connect to non-libre network services when configured by the
       user.
-  NSFW:
-    en-US: This app can be configured to access adult content sources.
 Categories:
   - Internet
 License: Apache-2.0
@@ -13,41 +11,20 @@ IssueTracker: https://github.com/yosefario-dev/NClientV3/issues
 
 RepoType: git
 Repo: https://github.com/yosefario-dev/NClientV3.git
+Binaries: https://github.com/yosefario-dev/NClientV3/releases/download/%v/NClientV3_%v_Release.apk
 
 Builds:
-  - versionName: 4.0.0-alpha01
-    versionCode: 400
-    commit: 4.0.0-alpha01
-    subdir: app
-    sudo:
-      - echo "deb https://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list
-      - apt-get update
-      - apt-get install -y -t trixie openjdk-21-jdk-headless
-      - update-alternatives --auto java
-    gradle:
-      - yes
-
-  - versionName: 4.0.2
-    versionCode: 411
-    commit: 4.0.2
-    subdir: app
-    sudo:
-      - echo "deb https://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list
-      - apt-get update
-      - apt-get install -y -t trixie openjdk-21-jdk-headless
-      - update-alternatives --auto java
-    gradle:
-      - yes
-
   - versionName: 4.1.0-alpha01
     versionCode: 420
     commit: 4.1.0-alpha01
     subdir: app
-    sudo:
-      - echo "deb https://deb.debian.org/debian trixie main" > /etc/apt/sources.list.d/trixie.list
-      - apt-get update
-      - apt-get install -y -t trixie openjdk-21-jdk-headless
-      - update-alternatives --auto java
+    gradle:
+      - yes
+
+  - versionName: 4.1.0-alpha02
+    versionCode: 421
+    commit: 4.1.0-alpha02
+    subdir: app
     gradle:
       - yes
 
@@ -55,5 +32,5 @@ AllowedAPKSigningKeys: 22ec856249b5cc990573ce112ba21eee59b701d98ba3253e269cf8a00
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 4.1.0-alpha01
-CurrentVersionCode: 420
+CurrentVersion: 4.1.0-alpha02
+CurrentVersionCode: 421
