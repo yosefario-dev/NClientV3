@@ -71,6 +71,12 @@
             android:title="@string/title_user_agent"
             app:iconSpaceReserved="false"
             android:defaultValue="@string/default_user_agent"/>
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="@string/key_send_app_user_agent"
+            android:summary="@string/summary_send_app_user_agent"
+            android:title="@string/title_send_app_user_agent"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory

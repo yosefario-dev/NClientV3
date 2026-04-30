@@ -31,12 +31,11 @@ public class AuthRequest extends Thread {
     @Override
     public void run() {
         new CSRFGet(token -> {
-            Global.client.newCall(new Request.Builder().url(url)
+            Request.Builder builder = new Request.Builder().url(url)
                 .addHeader("Referer", referer)
-                .addHeader("X-CSRFToken", token)
-                .addHeader("X-Requested-With", "XMLHttpRequest")
-                .method(method, body)
-                .build()).enqueue(callback);
+                .addHeader("X-Requested-With", "XMLHttpRequest");
+            if (token != null && !token.isEmpty()) builder.addHeader("X-CSRFToken", token);
+            Global.client.newCall(builder.method(method, body).build()).enqueue(callback);
         }, referer).start();
     }
 }

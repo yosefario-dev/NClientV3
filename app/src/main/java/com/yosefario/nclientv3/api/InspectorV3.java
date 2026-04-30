@@ -24,11 +24,6 @@ import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -40,6 +35,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import okhttp3.Request;
 import okhttp3.Response;
@@ -66,6 +66,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     private Ranges ranges = null;
     private InspectorResponse response;
     private WeakReference<Context> context;
+    private NhentaiV2Api.GalleryPayload apiGalleryPayload;
+    private NhentaiV2Api.ListPayload apiListPayload;
     private Document htmlDocument;
 
     protected InspectorV3(Parcel in) {
@@ -258,7 +260,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     private void tryByAllPopular() {
-        if (sortType != SortType.RECENT_ALL_TIME) {
+        if (sortType != null && sortType != SortType.RECENT_ALL_TIME) {
             requestType = ApiRequestType.BYSEARCH;
             query = "-nclientv3";
         }
@@ -285,13 +287,14 @@ public class InspectorV3 extends Thread implements Parcelable {
         } else if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
             builder.append("search/?q=").append(query);
             for (Tag tt : tags) {
+                if (tt == null) continue;
                 if (builder.toString().contains(tt.toQueryTag(TagStatus.ACCEPTED))) continue;
                 builder.append('+').append(URLEncoder.encode(tt.toQueryTag()));
             }
             if (ranges != null)
                 builder.append('+').append(ranges.toQuery());
             builder.append("&page=").append(page);
-            if (sortType.getUrlAddition() != null) {
+            if (sortType != null && sortType.getUrlAddition() != null) {
                 builder.append("&sort=").append(sortType.getUrlAddition());
             }
         }
@@ -310,20 +313,69 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public boolean createDocument() throws IOException {
+        if (apiGalleryPayload != null) return true;
+        if (apiListPayload != null) return true;
         if (htmlDocument != null) return true;
-        LogUtility.d("createDocument: fetching URL: " + url);
+        try {
+            createApiDocument();
+            return true;
+        } catch (IOException | RuntimeException e) {
+            LogUtility.e("API request failed; falling back to HTML scrape: " + url, e);
+            return createHtmlDocument();
+        }
+    }
+
+    private void createApiDocument() throws IOException {
+        NhentaiV2Api api = new NhentaiV2Api(context.get());
+        if (requestType == ApiRequestType.BYSINGLE) {
+            apiGalleryPayload = api.fetchGalleryPayload(id);
+            return;
+        }
+        if (requestType == ApiRequestType.RANDOM) {
+            apiGalleryPayload = api.fetchRandomGalleryPayload();
+            id = apiGalleryPayload.getId();
+            url = Utility.getBaseUrl() + "g/" + id;
+            return;
+        }
+        if (requestType == ApiRequestType.RANDOM_FAVORITE) {
+            apiGalleryPayload = api.fetchRandomFavoriteGalleryPayload();
+            id = apiGalleryPayload.getId();
+            url = Utility.getBaseUrl() + "g/" + id;
+            return;
+        }
+        if (requestType == ApiRequestType.FAVORITE) {
+            apiListPayload = api.fetchFavorites(createApiSearchQuery(), page);
+            return;
+        }
+        apiListPayload = api.fetchGalleries(createApiSearchQuery(), page, sortType);
+    }
+
+    private boolean createHtmlDocument() throws IOException {
+        LogUtility.d("createDocument fallback: fetching URL: " + url);
         Response response = Global.getClient(context.get()).newCall(new Request.Builder().url(url).build()).execute();
-        int code = response.code();
-        LogUtility.d("createDocument: response code=" + code + " for URL: " + url);
-        setHtmlDocument(Jsoup.parse(response.body().byteStream(), "UTF-8", Utility.getBaseUrl()));
-        response.close();
-        return code == HttpURLConnection.HTTP_OK;
+        try {
+            int code = response.code();
+            LogUtility.d("createDocument fallback: response code=" + code + " for URL: " + url);
+            if (response.body() == null) return false;
+            setHtmlDocument(Jsoup.parse(response.body().byteStream(), "UTF-8", Utility.getBaseUrl()));
+            return code == HttpURLConnection.HTTP_OK;
+        } finally {
+            response.close();
+        }
     }
 
     public void parseDocument() throws IOException, InvalidResponseException {
-        if (requestType.isSingle()) doSingle(htmlDocument.body());
-        else doSearch(htmlDocument.body());
-        htmlDocument = null;
+        if (apiGalleryPayload != null) {
+            doSingle(apiGalleryPayload);
+            apiGalleryPayload = null;
+        } else if (apiListPayload != null) {
+            doSearch(apiListPayload);
+            apiListPayload = null;
+        } else if (htmlDocument != null) {
+            if (requestType.isSingle()) doSingle(htmlDocument.body());
+            else doSearch(htmlDocument.body());
+            htmlDocument = null;
+        } else throw new InvalidResponseException();
     }
 
     public void setHtmlDocument(Document htmlDocument) {
@@ -331,7 +383,7 @@ public class InspectorV3 extends Thread implements Parcelable {
     }
 
     public boolean canParseDocument() {
-        return this.htmlDocument != null;
+        return this.apiGalleryPayload != null || this.apiListPayload != null || this.htmlDocument != null;
     }
 
     @Override
@@ -372,62 +424,65 @@ public class InspectorV3 extends Thread implements Parcelable {
         galleries.addAll(galleryTag);
     }
 
+    private void doSingle(NhentaiV2Api.GalleryPayload galleryPayload) throws IOException {
+        galleries = new ArrayList<>(1);
+        galleries.add(new Gallery(context.get(), galleryPayload.getJson(), galleryPayload.getRelated(), galleryPayload.isFavorite()));
+    }
+
     private void doSingle(Element document) throws IOException, InvalidResponseException {
         galleries = new ArrayList<>(1);
         Elements scripts = document.getElementsByTag("script");
-        LogUtility.d("doSingle: found " + scripts.size() + " script tags");
-        if (scripts.isEmpty())
-            throw new InvalidResponseException();
-        // Search all script tags for JSON.parse instead of assuming index 1
+        LogUtility.d("doSingle fallback: found " + scripts.size() + " script tags");
         String json = null;
-        for (int i = 0; i < scripts.size(); i++) {
-            String scriptHtml = scripts.get(i).html();
-            json = trimScriptTag(scriptHtml);
-            if (json != null) {
-                LogUtility.d("doSingle: found gallery JSON in script tag " + i);
-                break;
-            }
+        for (Element script : scripts) {
+            json = trimScriptTag(script.html());
+            if (json != null) break;
         }
-        if (json == null) {
-            LogUtility.e("doSingle: no JSON.parse found in any script tag");
-            throw new InvalidResponseException();
-        }
+        if (json == null) throw new InvalidResponseException();
         Element relContainer = document.getElementById("related-container");
-        Elements rel;
-        if (relContainer != null)
-            rel = relContainer.getElementsByClass("gallery");
-        else
-            rel = new Elements();
+        Elements rel = relContainer == null ? new Elements() : relContainer.getElementsByClass("gallery");
+        ArrayList<SimpleGallery> related = new ArrayList<>(rel.size());
+        for (Element element : rel) related.add(new SimpleGallery(context.get(), element));
         boolean isFavorite;
         try {
             isFavorite = document.getElementById("favorite").getElementsByTag("span").get(0).text().equals("Unfavorite");
         } catch (Exception e) {
             isFavorite = false;
         }
-        LogUtility.d("is favorite? " + isFavorite);
-        galleries.add(new Gallery(context.get(), json, rel, isFavorite));
+        galleries.add(new Gallery(context.get(), json, related, isFavorite));
     }
 
     @Nullable
     private String trimScriptTag(String scriptHtml) {
-        int s = scriptHtml.indexOf("parse");
-        if (s < 0) return null;
-        s += 7;
-        scriptHtml = scriptHtml.substring(s, scriptHtml.lastIndexOf(");") - 1);
-        scriptHtml = Utility.unescapeUnicodeString(scriptHtml);
-        if (scriptHtml.isEmpty()) return null;
-        return scriptHtml;
+        int parseStart = scriptHtml.indexOf("JSON.parse(");
+        if (parseStart < 0) parseStart = scriptHtml.indexOf("parse(");
+        if (parseStart < 0) return null;
+        int start = scriptHtml.indexOf('"', parseStart);
+        int end = scriptHtml.indexOf(");", start);
+        if (start < 0 || end <= start) return null;
+        if (scriptHtml.charAt(end - 1) == '"') end--;
+        String json = Utility.unescapeUnicodeString(scriptHtml.substring(start + 1, end));
+        return json.isEmpty() ? null : json;
+    }
+
+    private void doSearch(NhentaiV2Api.ListPayload payload) {
+        galleries = new ArrayList<>(payload.getGalleries().size());
+        galleries.addAll(payload.getGalleries());
+        pageCount = payload.getPageCount();
+        LogUtility.d("doSearch: API pageCount=" + pageCount + ", galleries parsed=" + galleries.size());
+        if (Global.isExactTagMatch())
+            filterDocumentTags();
     }
 
     private void doSearch(Element document) throws InvalidResponseException {
         Elements gal = document.getElementsByClass("gallery");
-        LogUtility.d("doSearch: found " + gal.size() + " gallery elements");
+        LogUtility.d("doSearch fallback: found " + gal.size() + " gallery elements");
         galleries = new ArrayList<>(gal.size());
         for (Element e : gal) galleries.add(new SimpleGallery(context.get(), e));
         gal = document.getElementsByClass("last");
         pageCount = gal.size() == 0 ? Math.max(1, page) : findTotal(gal.last());
-        LogUtility.d("doSearch: pageCount=" + pageCount + ", galleries parsed=" + galleries.size());
-        if (document.getElementById("content") == null)
+        LogUtility.d("doSearch fallback: pageCount=" + pageCount + ", galleries parsed=" + galleries.size());
+        if (document.getElementById("content") == null && galleries.isEmpty())
             throw new InvalidResponseException();
         if (Global.isExactTagMatch())
             filterDocumentTags();
@@ -435,12 +490,32 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     private int findTotal(Element e) {
         String temp = e.attr("href");
-
         try {
             return Integer.parseInt(Uri.parse(temp).getQueryParameter("page"));
         } catch (Exception ignore) {
             return 1;
         }
+    }
+
+    private String createApiSearchQuery() {
+        if (requestType == ApiRequestType.BYALL || requestType == ApiRequestType.RANDOM || requestType == ApiRequestType.RANDOM_FAVORITE)
+            return "";
+        StringBuilder builder = new StringBuilder();
+        appendApiSearchQuery(builder, query);
+        if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
+            for (Tag tag : tags) {
+                if (tag == null || builder.toString().contains(tag.toQueryTag(TagStatus.ACCEPTED))) continue;
+                appendApiSearchQuery(builder, tag.toQueryTag());
+            }
+            if (ranges != null) appendApiSearchQuery(builder, ranges.toQuery());
+        }
+        return builder.toString().trim();
+    }
+
+    private void appendApiSearchQuery(StringBuilder builder, @Nullable String part) {
+        if (part == null || part.trim().isEmpty()) return;
+        if (builder.length() > 0) builder.append(' ');
+        builder.append(part.trim());
     }
 
     public void setSortType(SortType sortType) {

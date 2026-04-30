@@ -1,0 +1,4 @@
+- Uygulama Kullanıcı Aracısı artık isteğe bağlı (varsayılan olarak kapalı; oturum açarken veya Ayarlar'da değiştirilebilir)
+- Eski girişler taşınır ve yeniden giriş yapmanız istenir
+- Android 15'te durum ve gezinme çubuklarının altına çizilen kullanıcı arayüzünü düzeltme
+- Paketlenmiş nhentai etiketlerini yenileyen haftalık iş

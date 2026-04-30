@@ -174,23 +174,42 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
         if (!add) writeTag(jw, tag);
         jw.endArray().endObject();
 
-        final String url = String.format(Locale.US, Utility.getBaseUrl() + "users/%d/%s/blacklist", Login.getUser().getId(), Login.getUser().getCodename());
-        final RequestBody ss = RequestBody.create(MediaType.get("application/json"), sw.toString());
+        requestOnlineTagUpdate(tag, add, imgView, sw.toString(), true);
+    }
+
+    private void requestOnlineTagUpdate(final Tag tag, final boolean add, final ImageView imgView, final String payload, final boolean api) {
+        final String url = api
+            ? Utility.getBaseUrl() + "api/v2/blacklist"
+            : String.format(Locale.US, Utility.getBaseUrl() + "users/%d/%s/blacklist", Login.getUser().getId(), Login.getUser().getCodename());
+        final RequestBody ss = RequestBody.create(MediaType.get("application/json"), payload);
         new AuthRequest(url, url, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (api) requestOnlineTagUpdate(tag, add, imgView, payload, false);
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.body().string().contains("ok")) {
-                    if (add) Login.addOnlineTag(tag);
-                    else Login.removeOnlineTag(tag);
-                    if (tagMode == TagMode.ONLINE)
-                        updateLogo(imgView, add ? TagStatus.AVOIDED : TagStatus.DEFAULT);
+                try {
+                    String body = response.body() == null ? "" : response.body().string();
+                    boolean success = response.isSuccessful() && (api ? !body.contains("\"error\"") : body.contains("ok"));
+                    if (success) {
+                        applyOnlineTagUpdate(tag, add, imgView);
+                    } else if (api) {
+                        requestOnlineTagUpdate(tag, add, imgView, payload, false);
+                    }
+                } finally {
+                    response.close();
                 }
             }
         }).setMethod("POST", ss).start();
+    }
+
+    private void applyOnlineTagUpdate(Tag tag, boolean add, ImageView imgView) {
+        if (add) Login.addOnlineTag(tag);
+        else Login.removeOnlineTag(tag);
+        if (tagMode == TagMode.ONLINE)
+            updateLogo(imgView, add ? TagStatus.AVOIDED : TagStatus.DEFAULT);
     }
 
     private void updateLogo(ImageView img, TagStatus s) {

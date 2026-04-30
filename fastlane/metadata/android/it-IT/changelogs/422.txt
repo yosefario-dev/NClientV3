@@ -1,0 +1,4 @@
+- L'Agente utente dell'app è ora opt-in (disattivato per impostazione predefinita; da attivare al momento dell'accesso o nelle Impostazioni).
+- I vecchi accessi sono stati migrati e vi verrà chiesto di accedere di nuovo.
+- Correzione dell'interfaccia utente che viene disegnata sotto le barre di stato e di navigazione su Android 15
+- Lavoro settimanale che aggiorna i tag nhentai in bundle

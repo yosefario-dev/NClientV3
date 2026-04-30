@@ -5,6 +5,8 @@ import android.os.Parcelable;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
+import androidx.annotation.Nullable;
+
 import com.yosefario.nclientv3.api.enums.ImageExt;
 import com.yosefario.nclientv3.api.enums.ImageType;
 import com.yosefario.nclientv3.components.classes.Size;
@@ -26,6 +28,8 @@ public class Page implements Parcelable {
     private final int page;
     private final ImageType imageType;
     private ImageExt imageExt;
+    @Nullable
+    private String path, thumbnailPath;
     private Size size = new Size(0, 0);
 
     Page() {
@@ -63,6 +67,12 @@ public class Page implements Parcelable {
                 case "h":
                     size.setHeight(reader.nextInt());
                     break;
+                case "path":
+                    path = reader.peek() == JsonToken.NULL ? null : reader.nextString();
+                    break;
+                case "thumbnail":
+                    thumbnailPath = reader.peek() == JsonToken.NULL ? null : reader.nextString();
+                    break;
                 default:
                     reader.skipValue();
                     break;
@@ -76,6 +86,8 @@ public class Page implements Parcelable {
         size = in.readParcelable(Size.class.getClassLoader());
         imageExt = ImageExt.values()[in.readByte()];
         imageType = ImageType.values()[in.readByte()];
+        path = in.readString();
+        thumbnailPath = in.readString();
     }
 
     private static ImageExt stringToExt(String ext) {
@@ -141,6 +153,8 @@ public class Page implements Parcelable {
         dest.writeParcelable(size, flags);
         dest.writeByte((byte) (imageExt == null ? ImageExt.JPG.ordinal() : imageExt.ordinal()));
         dest.writeByte((byte) (imageType == null ? ImageType.PAGE.ordinal() : imageType.ordinal()));
+        dest.writeString(path);
+        dest.writeString(thumbnailPath);
     }
 
     public int getPage() {
@@ -159,6 +173,16 @@ public class Page implements Parcelable {
         return imageType;
     }
 
+    @Nullable
+    public String getPath() {
+        return path;
+    }
+
+    @Nullable
+    public String getThumbnailPath() {
+        return thumbnailPath;
+    }
+
     public Size getSize() {
         return size;
     }
@@ -169,6 +193,8 @@ public class Page implements Parcelable {
             "page=" + page +
             ", imageExt=" + imageExt +
             ", imageType=" + imageType +
+            ", path='" + path + '\'' +
+            ", thumbnailPath='" + thumbnailPath + '\'' +
             ", size=" + size +
             '}';
     }

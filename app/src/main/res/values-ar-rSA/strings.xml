@@ -317,4 +317,12 @@
         <item>اليابانية</item>
         <item>أنيق</item>
     </string-array>
+    <string name="title_send_app_user_agent">التعريف بـ NClientV3</string>
+    <string name="summary_send_app_user_agent">إرسال NClientV3/إصدار NClientV3/إصدار كعميل مستخدم في طلبات واجهة برمجة التطبيقات حتى يتمكن nhentai.net من تمييز حركة مرور التطبيق. إيقاف التشغيل افتراضيًا للخصوصية.</string>
+    <string name="login_identify_label">أخبر nhentai.net أنني أستخدم NClientV3</string>
+    <string name="login_identify_explanation">في حالة التمكين، ترسل طلبات واجهة برمجة التطبيقات NClientV3/إصدار NClientV3/إصدار بدلاً من وكيل مستخدم عام للمتصفح. يمكنك تغيير ذلك لاحقًا في الإعدادات.</string>
+    <string name="relogin_dialog_title">تسجيل الدخول مرة أخرى</string>
+    <string name="relogin_dialog_message">تم ترحيل NClientV3 إلى واجهة برمجة تطبيقات nhentai الرسمية. يرجى تسجيل الدخول مرة أخرى لمواصلة استخدام حسابك.</string>
+    <string name="relogin_dialog_action">تسجيل الدخول</string>
+    <string name="relogin_dialog_dismiss">في وقت لاحق</string>
 </resources>

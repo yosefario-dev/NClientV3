@@ -1,0 +1,4 @@
+- App User-Agent is now opt-in (off by default; toggle at sign in or in Settings)
+- Older logins are migrated and you'll be asked to sign in again
+- Fix UI being drawn under the status and navigation bars on Android 15
+- Weekly job that refreshes the bundled nhentai tags
