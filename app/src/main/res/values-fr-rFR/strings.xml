@@ -317,4 +317,12 @@
         <item>Japonais</item>
         <item>Abrégé (anglais, titre seulement)</item>
     </string-array>
+    <string name="title_send_app_user_agent">S\'identifier comme NClientV3</string>
+    <string name="summary_send_app_user_agent">Envoyer NClientV3/version comme User-Agent sur les requêtes API afin que nhentai.net puisse distinguer le trafic de l\'application. Désactivé par défaut pour des raisons de confidentialité.</string>
+    <string name="login_identify_label">Indiquer à nhentai.net que j\'utilise NClientV3</string>
+    <string name="login_identify_explanation">Si cette option est activée, les demandes d\'API envoient NClientV3/version au lieu d\'un User-Agent générique du navigateur. nhentai.net demande aux applications de s\'identifier afin de pouvoir suivre l\'utilisation réelle des clients. Vous pouvez modifier ce paramètre ultérieurement dans les Paramètres.</string>
+    <string name="relogin_dialog_title">Se reconnecter</string>
+    <string name="relogin_dialog_message">NClientV3 a migré vers l\'API officielle de nhentai. Veuillez vous reconnecter pour continuer à utiliser votre compte.</string>
+    <string name="relogin_dialog_action">Se connecter</string>
+    <string name="relogin_dialog_dismiss">Plus tard</string>
 </resources>

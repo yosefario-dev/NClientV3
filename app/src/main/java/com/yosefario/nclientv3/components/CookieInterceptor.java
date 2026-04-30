@@ -58,11 +58,20 @@ public class CookieInterceptor {
             web.post(() -> web.setVisibility(View.VISIBLE));
         CookieManager manager = CookieManager.getInstance();
         HashMap<String, String> cookiesMap = new HashMap<>();
+        long startTime = System.currentTimeMillis();
         do {
             Utility.threadSleep(100);
             cookies = manager.getCookie(Utility.getBaseUrl());
-            if (cookies == null)
+            if (cookies == null) {
+                if (System.currentTimeMillis() - startTime > 60000) {
+                    LogUtility.e("Timed out waiting for Cloudflare cookies");
+                    return;
+                }
+                continue;
+            }
+            if (cookies.isEmpty()) {
                 return;
+            }
             String[] splitCookies = cookies.split("; ");
             for (String splitCookie : splitCookies) {
                 String[] kv = splitCookie.split("=", 2);

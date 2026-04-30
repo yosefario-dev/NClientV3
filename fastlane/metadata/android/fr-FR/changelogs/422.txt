@@ -1,0 +1,4 @@
+- L'agent utilisateur de l'application est désormais facultatif (désactivé par défaut ; à basculer lors de la connexion ou dans les paramètres).
+- Les anciennes connexions sont migrées et il vous sera demandé de vous connecter à nouveau.
+- Correction de l'affichage de l'interface utilisateur sous les barres d'état et de navigation sur Android 15
+- Tâche hebdomadaire qui rafraîchit les balises nhentai groupées

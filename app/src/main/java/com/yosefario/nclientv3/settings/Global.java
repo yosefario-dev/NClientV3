@@ -30,6 +30,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.yosefario.nclientv3.CopyToClipboardActivity;
+import com.yosefario.nclientv3.BuildConfig;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.api.components.GenericGallery;
 import com.yosefario.nclientv3.api.enums.Language;
@@ -94,6 +95,7 @@ public class Global {
     private static Point screenSize;
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UQ1A.240205.002) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36";
     private static String userAgent = DEFAULT_USER_AGENT;
+    private static boolean sendAppUserAgent = false;
 
     public static long recursiveSize(File path) {
         if (path.isFile()) return path.length();
@@ -162,6 +164,24 @@ public class Global {
     public static String getUserAgent() {
         String agent = userAgent == null ? DEFAULT_USER_AGENT : userAgent;
         return agent.replace("\n", " ").trim();
+    }
+
+    @NonNull
+    public static String getApiUserAgent() {
+        if (sendAppUserAgent) return "NClientV3/" + BuildConfig.VERSION_NAME;
+        return getUserAgent();
+    }
+
+    public static boolean shouldSendAppUserAgent() {
+        return sendAppUserAgent;
+    }
+
+    public static void setSendAppUserAgent(@NonNull Context context, boolean enabled) {
+        sendAppUserAgent = enabled;
+        context.getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(context.getString(R.string.key_send_app_user_agent), enabled)
+            .apply();
     }
 
     public static String getDefaultFileParent(Context context) {
@@ -321,6 +341,7 @@ public class Global {
         colLandStat = shared.getInt(context.getString(R.string.key_column_land_stat), 4);
         zoomOneColumn = shared.getBoolean(context.getString(R.string.key_zoom_one_column), false);
         userAgent = shared.getString(context.getString(R.string.key_user_agent), DEFAULT_USER_AGENT);
+        sendAppUserAgent = shared.getBoolean(context.getString(R.string.key_send_app_user_agent), false);
         int x = Math.max(0, shared.getInt(context.getString(R.string.key_only_language), Language.ALL.ordinal()));
         sortType = SortType.values()[shared.getInt(context.getString(R.string.key_by_popular), SortType.RECENT_ALL_TIME.ordinal())];
         usageMobile = DataUsageType.values()[shared.getInt(context.getString(R.string.key_mobile_usage), DataUsageType.FULL.ordinal())];
@@ -392,9 +413,10 @@ public class Global {
         client = builder.build();
         client.dispatcher().setMaxRequests(25);
         client.dispatcher().setMaxRequestsPerHost(25);
+        Login.migrateAuthIfNeeded(context);
         if (Login.BASE_HTTP_URL != null) {
             for (Cookie cookie : client.cookieJar().loadForRequest(Login.BASE_HTTP_URL)) {
-                LogUtility.d("Cookie: " + cookie);
+                LogUtility.d("Cookie: " + cookie.name());
             }
         }
         Login.isLogged(context);
