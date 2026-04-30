@@ -12,6 +12,10 @@ import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -31,19 +35,6 @@ public class LoadTags extends Thread {
         this.adapter = adapter;
     }
 
-    private Elements getScripts(String url) throws IOException {
-
-        Response response = Global.getClient().newCall(new Request.Builder().url(url).build()).execute();
-        Elements x = Jsoup.parse(response.body().byteStream(), null, Utility.getBaseUrl()).getElementsByTag("script");
-        response.close();
-        return x;
-    }
-
-    private String extractArray(Element e) throws StringIndexOutOfBoundsException {
-        String t = e.toString();
-        return t.substring(t.indexOf('['), t.indexOf(';'));
-    }
-
     private void readTags(JsonReader reader) throws IOException {
         reader.beginArray();
         while (reader.hasNext()) {
@@ -55,19 +46,73 @@ public class LoadTags extends Thread {
         }
     }
 
-    @Override
-    public void run() {
-        super.run();
-        if (Login.getUser() == null) return;
+    private void readTags(JSONArray tags) throws IOException {
+        Login.clearOnlineTags();
+        JsonReader reader = new JsonReader(new StringReader(tags.toString()));
+        readTags(reader);
+        reader.close();
+    }
+
+    private JSONArray fetchApiTags() throws IOException, JSONException {
+        String url = Utility.getBaseUrl() + "api/v2/blacklist";
+        LogUtility.d(url);
+        Response response = Global.getClient().newCall(new Request.Builder().url(url).build()).execute();
+        try {
+            if (!response.isSuccessful()) throw new IOException("HTTP " + response.code() + " while fetching " + url);
+            if (response.body() == null) return new JSONArray();
+            Object payload = new JSONTokener(response.body().string()).nextValue();
+            if (payload instanceof JSONArray) return (JSONArray) payload;
+            if (!(payload instanceof JSONObject)) return new JSONArray();
+            JSONObject object = (JSONObject) payload;
+            String[] keys = {"result", "tags", "blacklist", "blacklisted_tags", "items"};
+            for (String key : keys) {
+                JSONArray array = object.optJSONArray(key);
+                if (array != null) return array;
+            }
+            return new JSONArray();
+        } finally {
+            response.close();
+        }
+    }
+
+    private Elements getScripts(String url) throws IOException {
+        Response response = Global.getClient().newCall(new Request.Builder().url(url).build()).execute();
+        try {
+            if (response.body() == null) return new Elements();
+            return Jsoup.parse(response.body().byteStream(), null, Utility.getBaseUrl()).getElementsByTag("script");
+        } finally {
+            response.close();
+        }
+    }
+
+    private String extractArray(Element e) throws StringIndexOutOfBoundsException {
+        String text = e.toString();
+        int start = text.indexOf('[');
+        int end = text.indexOf(';', start);
+        return text.substring(start, end);
+    }
+
+    private void fetchScrapedTags() throws IOException {
         String url = String.format(Locale.US, Utility.getBaseUrl() + "users/%s/%s/blacklist",
             Login.getUser().getId(), Login.getUser().getCodename()
         );
         LogUtility.d(url);
+        analyzeScripts(getScripts(url));
+    }
+
+    @Override
+    public void run() {
+        super.run();
+        if (Login.getUser() == null) return;
         try {
-            Elements scripts = getScripts(url);
-            analyzeScripts(scripts);
-        } catch (IOException | StringIndexOutOfBoundsException e) {
-            e.printStackTrace();
+            readTags(fetchApiTags());
+        } catch (IOException | JSONException e) {
+            LogUtility.e("Unable to load API blacklist; falling back to HTML", e);
+            try {
+                fetchScrapedTags();
+            } catch (IOException | StringIndexOutOfBoundsException fallbackError) {
+                LogUtility.e("Unable to load HTML blacklist fallback", fallbackError);
+            }
         }
 
     }

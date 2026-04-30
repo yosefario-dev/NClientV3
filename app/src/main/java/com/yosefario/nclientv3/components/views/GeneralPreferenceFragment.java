@@ -180,6 +180,13 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             Global.setEnableBeta((Boolean) newValue);
             return true;
         });
+        Preference sendUaPref = findPreference(getString(R.string.key_send_app_user_agent));
+        if (sendUaPref != null) {
+            sendUaPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                Global.setSendAppUserAgent(act, Boolean.TRUE.equals(newValue));
+                return true;
+            });
+        }
         findPreference("has_pin").setOnPreferenceChangeListener((preference, newValue) -> {
             if (newValue.equals(Boolean.TRUE)) {
                 Intent i = new Intent(act, PINActivity.class);

@@ -317,4 +317,12 @@
         <item>日文</item>
         <item>簡約</item>
     </string-array>
+    <string name="title_send_app_user_agent">識別為 NClientV3</string>
+    <string name="summary_send_app_user_agent">在 API 要求中傳送 NClientV3/version 作為 User-Agent，以便 nhentai.net 可以區分應用程式流量。預設關閉以保護隱私。</string>
+    <string name="login_identify_label">告訴 nhentai.net 我正在使用 NClientV3</string>
+    <string name="login_identify_explanation">如果啟用，API 請求會傳送 NClientV3/version，而不是一般的瀏覽器 User-Agent。nhentai.net 會要求應用程式識別自己的身份，以便追蹤真實的用戶端使用情況。您可以稍後在設定中變更。</string>
+    <string name="relogin_dialog_title">再次登入</string>
+    <string name="relogin_dialog_message">NClientV3 已遷移至 nhentai 的官方 API。請重新登入以繼續使用您的帳號。</string>
+    <string name="relogin_dialog_action">登入</string>
+    <string name="relogin_dialog_dismiss">稍後</string>
 </resources>

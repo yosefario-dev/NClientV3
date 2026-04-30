@@ -25,9 +25,6 @@ import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
@@ -60,11 +57,10 @@ public class Gallery extends GenericGallery {
     private Language language = Language.UNKNOWN;
     private Size maxSize = new Size(0, 0), minSize = new Size(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    public Gallery(Context context, String json, Elements related, boolean isFavorite) throws IOException {
+    public Gallery(Context context, String json, List<SimpleGallery> related, boolean isFavorite) throws IOException {
         LogUtility.d("Found JSON: " + json);
         JsonReader reader = new JsonReader(new StringReader(json));
-        this.related = new ArrayList<>(related.size());
-        for (Element e : related) this.related.add(new SimpleGallery(context, e));
+        this.related = related == null ? new ArrayList<>() : new ArrayList<>(related);
         galleryData = new GalleryData(reader);
         folder = GalleryFolder.fromId(context, galleryData.getId());
         calculateSizes(galleryData);
@@ -155,6 +151,8 @@ public class Gallery extends GenericGallery {
     public Uri getCover() {
         if (Global.getDownloadPolicy() == Global.DataUsageType.THUMBNAIL) return getThumbnail();
         if (galleryData.getCover().getImageExt() == ImageExt.GIF) return getHighPage(0);
+        Uri uri = getRemoteImageUri("t", galleryData.getCover().getPath());
+        if (uri != null) return uri;
         String ext = galleryData.getCover().extToString();
         return Uri.parse(String.format(Locale.US, "https://t." + Utility.getHost() + "/galleries/%d/cover.%s", getMediaId(), ext));
     }
@@ -165,8 +163,17 @@ public class Gallery extends GenericGallery {
 
     public Uri getThumbnail() {
         if (galleryData.getCover().getImageExt() == ImageExt.GIF) return getHighPage(0);
+        Uri uri = getRemoteImageUri("t", galleryData.getThumbnail().getPath());
+        if (uri != null) return uri;
         String ext = galleryData.getThumbnail().extToString();
         return Uri.parse(String.format(Locale.US, "https://t." + Utility.getHost() + "/galleries/%d/thumb.%s", getMediaId(), ext));
+    }
+
+    @Nullable
+    private Uri getRemoteImageUri(String subdomain, @Nullable String path) {
+        if (path == null || path.isEmpty()) return null;
+        if (path.startsWith("http://") || path.startsWith("https://")) return Uri.parse(path);
+        return Uri.parse("https://" + subdomain + "." + Utility.getHost() + "/" + path);
     }
 
     private @Nullable
@@ -185,11 +192,15 @@ public class Gallery extends GenericGallery {
     }
 
     public Uri getHighPage(int page) {
+        Uri uri = getRemoteImageUri("i", getPage(page).getPath());
+        if (uri != null) return uri;
         return Uri.parse(String.format(Locale.US, "https://i." + Utility.getHost() + "/galleries/%d/%d.%s", getMediaId(), page + 1, getPageExtension(page)));
     }
 
     public Uri getLowPage(int page) {
         Uri uri = getFileUri(page);
+        if (uri != null) return uri;
+        uri = getRemoteImageUri("t", getPage(page).getThumbnailPath());
         if (uri != null) return uri;
         return Uri.parse(String.format(Locale.US, "https://t." + Utility.getHost() + "/galleries/%d/%dt.%s", getMediaId(), page + 1, getPageExtension(page)));
     }

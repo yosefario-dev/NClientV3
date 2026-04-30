@@ -47,6 +47,27 @@ public class Utility {
     private static void parseEscapedCharacter(Reader reader, Writer writer) throws IOException {
         int toCreate, read;
         switch (read = reader.read()) {
+            case '"':
+                writer.write('"');
+                break;
+            case '\'':
+                writer.write('\'');
+                break;
+            case '\\':
+                writer.write('\\');
+                break;
+            case '/':
+                writer.write('/');
+                break;
+            case 'b':
+                writer.write('\b');
+                break;
+            case 'f':
+                writer.write('\f');
+                break;
+            case 'r':
+                writer.write('\r');
+                break;
             case 'u':
                 toCreate = 0;
                 for (int i = 0; i < 4; i++) {

@@ -317,4 +317,12 @@
         <item>Японська</item>
         <item>Pretty</item>
     </string-array>
+    <string name="title_send_app_user_agent">Ідентифікуватися як NClientV3</string>
+    <string name="summary_send_app_user_agent">Надсилати NClientV3/версію як User-Agent на запити API, щоб nhentai.net міг розрізняти трафік додатків. За замовчуванням вимкнено для конфіденційності.</string>
+    <string name="login_identify_label">Повідомте nhentai.net, що я використовую NClientV3</string>
+    <string name="login_identify_explanation">Якщо увімкнено, запити API надсилатимуть NClientV3/version замість звичайного браузерного User-Agent. nhentai.net просить програми ідентифікувати себе, щоб вони могли відстежувати реальне використання клієнта. Ви можете змінити це пізніше в Налаштуваннях.</string>
+    <string name="relogin_dialog_title">Увійдіть ще раз</string>
+    <string name="relogin_dialog_message">NClientV3 мігрував на офіційний API nhentai. Будь ласка, увійдіть знову, щоб продовжити користуватися своїм обліковим записом.</string>
+    <string name="relogin_dialog_action">Увійдіть в систему</string>
+    <string name="relogin_dialog_dismiss">Пізніше.</string>
 </resources>

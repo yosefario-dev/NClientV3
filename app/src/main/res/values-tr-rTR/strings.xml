@@ -317,4 +317,12 @@
         <item>Japonca</item>
         <item>Özel</item>
     </string-array>
+    <string name="title_send_app_user_agent">NClientV3 olarak tanımlayın</string>
+    <string name="summary_send_app_user_agent">nhentai.net\'in uygulama trafiğini ayırt edebilmesi için API isteklerinde User-Agent olarak NClientV3/version gönderin. Gizlilik için varsayılan olarak kapalıdır.</string>
+    <string name="login_identify_label">nhentai.net\'e NClientV3 kullandığımı söyle</string>
+    <string name="login_identify_explanation">Etkinleştirilirse API istekleri genel bir tarayıcı Kullanıcı Aracısı yerine NClientV3/version gönderir. nhentai.net gerçek istemci kullanımını takip edebilmek için uygulamalardan kendilerini tanımlamalarını ister. Bunu daha sonra Ayarlar\'dan değiştirebilirsiniz.</string>
+    <string name="relogin_dialog_title">Tekrar oturum açın</string>
+    <string name="relogin_dialog_message">NClientV3 nhentai\'nin resmi API\'sine geçiş yaptı. Hesabınızı kullanmaya devam etmek için lütfen tekrar giriş yapın.</string>
+    <string name="relogin_dialog_action">Oturum aç</string>
+    <string name="relogin_dialog_dismiss">Daha sonra</string>
 </resources>

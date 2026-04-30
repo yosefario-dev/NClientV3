@@ -9,6 +9,10 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.components.views.CFTokenView;
@@ -55,6 +59,30 @@ public abstract class GeneralActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Global.initActivity(this);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+    }
+
+    @Override
+    public void onContentChanged() {
+        super.onContentChanged();
+        if (!applySystemBarInsets()) return;
+        View content = findViewById(android.R.id.content);
+        if (content == null) return;
+        ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+    }
+
+    /**
+     * Override and return false for activities that manage system bar insets themselves
+     * (immersive readers, layouts with their own DrawerLayout / fitsSystemWindows chain).
+     */
+    protected boolean applySystemBarInsets() {
+        return true;
     }
 
     @Override

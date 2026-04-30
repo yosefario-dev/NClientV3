@@ -20,6 +20,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.appbar.MaterialToolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
@@ -41,6 +44,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.File;
 
 public class ZoomActivity extends GeneralActivity {
+    @Override
+    protected boolean applySystemBarInsets() {
+        return false;
+    }
+
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private final static int hideFlags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -61,6 +69,10 @@ public class ZoomActivity extends GeneralActivity {
     private SeekBar seekBar;
     private MaterialToolbar toolbar;
     private View view;
+    private Insets systemBarInsets = Insets.NONE;
+    private int toolbarPaddingLeft, toolbarPaddingTop, toolbarPaddingRight, toolbarPaddingBottom;
+    private int pageSwitcherPaddingLeft, pageSwitcherPaddingTop, pageSwitcherPaddingRight, pageSwitcherPaddingBottom;
+    private int cornerPageViewerPaddingLeft, cornerPageViewerPaddingTop, cornerPageViewerPaddingRight, cornerPageViewerPaddingBottom;
     private GalleryFolder directory;
     @ViewPager2.Orientation
     private int tmpScrollType;
@@ -105,6 +117,7 @@ public class ZoomActivity extends GeneralActivity {
         cornerPageViewer = findViewById(R.id.page_text);
         seekBar = findViewById(R.id.seekBar);
         view = findViewById(R.id.view);
+        setupSystemInsets();
 
         //initial setup for views
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -238,10 +251,64 @@ public class ZoomActivity extends GeneralActivity {
         return ViewConfiguration.get(this).hasPermanentMenuKey();
     }
 
-    private void applyMargin(boolean landscape, View view) {
-        ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) view.getLayoutParams();
-        lp.setMargins(0, 0, landscape && !hardwareKeys() ? Global.getNavigationBarHeight(this) : 0, 0);
-        view.setLayoutParams(lp);
+    private void setupSystemInsets() {
+        toolbarPaddingLeft = toolbar.getPaddingLeft();
+        toolbarPaddingTop = toolbar.getPaddingTop();
+        toolbarPaddingRight = toolbar.getPaddingRight();
+        toolbarPaddingBottom = toolbar.getPaddingBottom();
+
+        pageSwitcherPaddingLeft = pageSwitcher.getPaddingLeft();
+        pageSwitcherPaddingTop = pageSwitcher.getPaddingTop();
+        pageSwitcherPaddingRight = pageSwitcher.getPaddingRight();
+        pageSwitcherPaddingBottom = pageSwitcher.getPaddingBottom();
+
+        cornerPageViewerPaddingLeft = cornerPageViewer.getPaddingLeft();
+        cornerPageViewerPaddingTop = cornerPageViewer.getPaddingTop();
+        cornerPageViewerPaddingRight = cornerPageViewer.getPaddingRight();
+        cornerPageViewerPaddingBottom = cornerPageViewer.getPaddingBottom();
+
+        View root = findViewById(R.id.zoom_root);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, windowInsets) -> {
+            systemBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            applySystemInsets();
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(root);
+    }
+
+    private void applySideInsets(boolean landscape, View view) {
+        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) view.getLayoutParams();
+        int left = landscape && !hardwareKeys() ? systemBarInsets.left : 0;
+        int right = landscape && !hardwareKeys() ? systemBarInsets.right : 0;
+        layoutParams.setMargins(left, layoutParams.topMargin, right, layoutParams.bottomMargin);
+        view.setLayoutParams(layoutParams);
+    }
+
+    private void applySystemInsets() {
+        applySystemInsets(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+    }
+
+    private void applySystemInsets(boolean landscape) {
+        toolbar.setPadding(
+            toolbarPaddingLeft,
+            toolbarPaddingTop + systemBarInsets.top,
+            toolbarPaddingRight,
+            toolbarPaddingBottom
+        );
+        pageSwitcher.setPadding(
+            pageSwitcherPaddingLeft,
+            pageSwitcherPaddingTop,
+            pageSwitcherPaddingRight,
+            pageSwitcherPaddingBottom + systemBarInsets.bottom
+        );
+        cornerPageViewer.setPadding(
+            cornerPageViewerPaddingLeft,
+            cornerPageViewerPaddingTop + systemBarInsets.top,
+            cornerPageViewerPaddingRight + systemBarInsets.right,
+            cornerPageViewerPaddingBottom
+        );
+        applySideInsets(landscape, findViewById(R.id.master_layout));
+        applySideInsets(landscape, toolbar);
     }
 
     public ViewPager2 geViewPager() {
@@ -249,10 +316,7 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void changeLayout(boolean landscape) {
-        int statusBarHeight = Global.getStatusBarHeight(this);
-        applyMargin(landscape, findViewById(R.id.master_layout));
-        applyMargin(landscape, toolbar);
-        pageSwitcher.setPadding(0, 0, 0, landscape ? 0 : statusBarHeight);
+        applySystemInsets(landscape);
     }
 
     private void changePage(int newPage) {

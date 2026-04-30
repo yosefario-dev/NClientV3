@@ -195,6 +195,24 @@ public class MainActivity extends BaseActivity
             setActivityTitle();
         }
         updateSourceDependentUI();
+        maybeShowReloginDialog();
+    }
+
+    @Override
+    protected boolean applySystemBarInsets() {
+        return false;
+    }
+
+    private void maybeShowReloginDialog() {
+        if (!Login.isReloginPending()) return;
+        Login.clearReloginPending();
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.relogin_dialog_title)
+            .setMessage(R.string.relogin_dialog_message)
+            .setPositiveButton(R.string.relogin_dialog_action, (d, w) ->
+                startActivity(new android.content.Intent(this, LoginActivity.class)))
+            .setNegativeButton(R.string.relogin_dialog_dismiss, null)
+            .show();
     }
 
     private void manageDrawer() {
