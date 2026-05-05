@@ -8,7 +8,9 @@
   A modernized, unofficial NHentai Android client.<br>
   Forked from <a href="https://github.com/Dar9586/NClientV2">NClientV2</a> by Dar9586.
 </p>
-
+<p align="center">
+  <a href="https://f-droid.org/packages/com.yosefario.nclientv3/"><img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80"></a>
+</p>
 <p align="center">
   <a href="https://github.com/yosefario-dev/NClientV3/releases"><img src="https://img.shields.io/github/v/release/yosefario-dev/NClientV3?include_prereleases&style=for-the-badge&color=ec2854" alt="Release"></a>
   <a href="https://github.com/yosefario-dev/NClientV3/actions"><img src="https://img.shields.io/github/actions/workflow/status/yosefario-dev/NClientV3/build.yml?style=for-the-badge" alt="Build"></a>
