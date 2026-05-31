@@ -1,0 +1,4 @@
+- I preferiti locali e online ora sono un'unica schermata con le schede Locale e Online
+- Impostazioni separate per la scheda predefinita e per la destinazione del pulsante dei preferiti
+- Le azioni di preferito locale e online restano a portata di un tocco in una galleria
+- L'aggiunta ai preferiti online (aggiunta, rimozione e stato) funziona di nuovo con l'attuale API di nhentai

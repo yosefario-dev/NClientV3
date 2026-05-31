@@ -2,6 +2,8 @@
 
 <resources>
     <string name="key_offscreen_limit" translatable="false">offscreen_limit</string>
+    <string name="key_default_favorite" translatable="false">default_favorite</string>
+    <string name="key_default_favorite_tab" translatable="false">default_favorite_tab</string>
     <string name="key_default_value" translatable="false">default_value</string>
     <string name="key_enable_beta" translatable="false">enable_beta</string>
     <string name="key_save_path" translatable="false">save_path</string>
@@ -401,6 +403,18 @@
     <string name="hide">Hide</string>
     <string name="title_user_agent">Change User-Agent</string>
 
+    <string name="favorite_screen">Favorites</string>
+    <string name="default_favorite_title">Default favorite action</string>
+    <string name="default_favorite_summary">Which list the favorite button saves to, and which icon is shown in the toolbar</string>
+    <string name="default_favorite_tab_title">Default favorites tab</string>
+    <string name="default_favorite_tab_summary">Which tab the Favorites screen opens on</string>
+    <string name="favorite_tab_local">Local</string>
+    <string name="favorite_tab_online">Online</string>
+    <string name="favorite_tab_count">%1$s · %2$d</string>
+    <string name="favorite_login_cta">Log in to sync favorites</string>
+    <string name="favorite_empty_local">No local favorites yet</string>
+    <string name="favorite_empty_online">No online favorites yet</string>
+
 
     <string-array name="scroll_type">
         <item>Horizontal</item>
@@ -429,6 +443,16 @@
         <item>english</item>
         <item>japanese</item>
         <item>pretty</item>
+    </string-array>
+
+    <string-array name="favorite_target">
+        <item>Local</item>
+        <item>Online</item>
+    </string-array>
+
+    <string-array name="favorite_target_data" translatable="false">
+        <item>local</item>
+        <item>online</item>
     </string-array>
 
 </resources>

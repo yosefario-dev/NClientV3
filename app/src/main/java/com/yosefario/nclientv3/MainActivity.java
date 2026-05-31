@@ -124,7 +124,7 @@ public class MainActivity extends BaseActivity
         }
     };
     //views
-    public MenuItem loginItem, onlineFavoriteManager;
+    public MenuItem loginItem;
     private InspectorV3 inspector = null;
     private NavigationView navigationView;
     private ModeType modeType = ModeType.UNKNOWN;
@@ -301,7 +301,6 @@ public class MainActivity extends BaseActivity
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setNavigationOnClickListener(v -> finish());
         navigationView.setNavigationItemSelectedListener(this);
-        onlineFavoriteManager.setVisible(Global.isSourceConfigured() && com.yosefario.nclientv3.settings.Login.isLogged());
     }
 
     private void updateSourceDependentUI() {
@@ -311,7 +310,6 @@ public class MainActivity extends BaseActivity
         drawerMenu.findItem(R.id.random).setVisible(configured);
         drawerMenu.findItem(R.id.tag_manager).setVisible(configured);
         drawerMenu.findItem(R.id.action_login).setVisible(configured);
-        onlineFavoriteManager.setVisible(configured && com.yosefario.nclientv3.settings.Login.isLogged());
         invalidateOptionsMenu();
     }
 
@@ -329,7 +327,6 @@ public class MainActivity extends BaseActivity
         drawerLayout = findViewById(R.id.drawer_layout);
         emptyStateText = findViewById(R.id.empty_state_text);
         loginItem = navigationView.getMenu().findItem(R.id.action_login);
-        onlineFavoriteManager = navigationView.getMenu().findItem(R.id.online_favorite_manager);
     }
 
     private void loadStringLogin() {
@@ -382,7 +379,12 @@ public class MainActivity extends BaseActivity
             useTagMode(intent, packageName);
         else if (intent.getBooleanExtra(packageName + ".SEARCHMODE", false))
             useSearchMode(intent, packageName);
-        else if (intent.getBooleanExtra(packageName + ".FAVORITE", false)) useFavoriteMode(1);
+        else if (intent.getBooleanExtra(packageName + ".FAVORITE", false)) {
+            Intent fav = new Intent(this, FavoritesActivity.class);
+            fav.putExtra(getPackageName() + FavoritesActivity.EXTRA_OPEN_ONLINE, true);
+            startActivity(fav);
+            finish();
+        }
         else if (intent.getBooleanExtra(packageName + ".BYBOOKMARK", false))
             useBookmarkMode(intent, packageName);
         else if (data != null) manageDataStart(data);
@@ -405,12 +407,6 @@ public class MainActivity extends BaseActivity
         else if (type == ApiRequestType.BYSEARCH) modeType = ModeType.SEARCH;
         else if (type == ApiRequestType.FAVORITE) modeType = ModeType.FAVORITE;
 
-    }
-
-    private void useFavoriteMode(int page) {
-        //instantiateWebView();
-        inspector = InspectorV3.favoriteInspector(this, null, page, resetDataset);
-        modeType = ModeType.FAVORITE;
     }
 
     private void useSearchMode(Intent intent, String packageName) {
@@ -477,12 +473,10 @@ public class MainActivity extends BaseActivity
         if (pageParam != null) page = Integer.parseInt(pageParam);
 
         if (favorite) {
-            if (com.yosefario.nclientv3.settings.Login.isLogged()) useFavoriteMode(page);
-            else {
-                Intent intent = new Intent(this, FavoriteActivity.class);
-                startActivity(intent);
-                finish();
-            }
+            Intent intent = new Intent(this, FavoritesActivity.class);
+            intent.putExtra(getPackageName() + FavoritesActivity.EXTRA_OPEN_ONLINE, true);
+            startActivity(intent);
+            finish();
             return;
         }
 
@@ -560,7 +554,6 @@ public class MainActivity extends BaseActivity
         builder.setIcon(R.drawable.ic_exit_to_app).setTitle(R.string.logout).setMessage(R.string.are_you_sure);
         builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
             Login.logout(this);
-            onlineFavoriteManager.setVisible(false);
             loginItem.setTitle(R.string.login);
         }).setNegativeButton(R.string.no, null).show();
     }
@@ -575,7 +568,6 @@ public class MainActivity extends BaseActivity
             idOpenedGallery = -1;
         }
         loadStringLogin();
-        onlineFavoriteManager.setVisible(Global.isSourceConfigured() && com.yosefario.nclientv3.settings.Login.isLogged());
         if (setting != null) {
             Global.initFromShared(this);//restart all settings
             boolean nowConfigured = Global.isSourceConfigured();
@@ -833,15 +825,11 @@ public class MainActivity extends BaseActivity
             startActivity(intent);
 
         } else if (item.getItemId() == R.id.favorite_manager) {
-            intent = new Intent(this, FavoriteActivity.class);
+            intent = new Intent(this, FavoritesActivity.class);
             startActivity(intent);
         } else if (item.getItemId() == R.id.action_settings) {
             setting = new Setting();
             intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-        } else if (item.getItemId() == R.id.online_favorite_manager) {
-            intent = new Intent(this, MainActivity.class);
-            intent.putExtra(getPackageName() + ".FAVORITE", true);
             startActivity(intent);
         } else if (item.getItemId() == R.id.action_login) {
             if (Login.isLogged())

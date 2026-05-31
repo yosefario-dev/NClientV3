@@ -36,9 +36,9 @@
     <item
         android:id="@+id/add_online_gallery"
         android:icon="@drawable/ic_star"
-        android:orderInCategory="500"
+        android:orderInCategory="150"
         android:title="@string/remove_from_online_favorites"
-        app:showAsAction="ifRoom|collapseActionView" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/manage_status"
         android:orderInCategory="550"

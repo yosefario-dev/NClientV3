@@ -20,7 +20,7 @@ import com.yosefario.nclientv3.api.SimpleGallery;
 import com.yosefario.nclientv3.api.components.GenericGallery;
 import com.yosefario.nclientv3.api.enums.Language;
 import com.yosefario.nclientv3.async.database.Queries;
-import com.yosefario.nclientv3.components.activities.BaseActivity;
+import com.yosefario.nclientv3.components.activities.GeneralActivity;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.TagV2;
 import com.yosefario.nclientv3.utility.ImageDownloadUtility;
@@ -35,11 +35,11 @@ import java.util.Locale;
 public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> {
     private final SparseIntArray statuses = new SparseIntArray();
     private final List<SimpleGallery> mDataset;
-    private final BaseActivity context;
+    private final GeneralActivity context;
     private final boolean storagePermission;
     private final String queryString;
 
-    public ListAdapter(BaseActivity cont) {
+    public ListAdapter(GeneralActivity cont) {
         this.context = cont;
         this.mDataset = new ArrayList<SimpleGallery>(){
             @Override

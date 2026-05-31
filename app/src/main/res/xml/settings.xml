@@ -19,6 +19,22 @@
             android:summary="@string/theme_summary"
             android:title="@string/change_theme"
             app:iconSpaceReserved="false" />
+        <ListPreference
+            android:defaultValue="local"
+            android:entries="@array/favorite_target"
+            android:entryValues="@array/favorite_target_data"
+            android:key="@string/key_default_favorite"
+            android:title="@string/default_favorite_title"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            android:defaultValue="local"
+            android:entries="@array/favorite_target"
+            android:entryValues="@array/favorite_target_data"
+            android:key="@string/key_default_favorite_tab"
+            android:title="@string/default_favorite_tab_title"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
         <EditTextPreference
             android:defaultValue=""
             android:key="@string/key_site_mirror"
