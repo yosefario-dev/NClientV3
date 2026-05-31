@@ -1,0 +1,4 @@
+- Yerel ve çevrimiçi favoriler artık Yerel ve Çevrimiçi sekmeleriyle tek bir ekranda
+- Varsayılan sekme ve favori düğmesinin hedefi için ayrı ayarlar
+- Bir galeride yerel ve çevrimiçi favori işlemleri tek dokunuşla erişilebilir kalır
+- Çevrimiçi favorilere ekleme (ekleme, kaldırma ve durum) güncel nhentai API'siyle yeniden çalışıyor

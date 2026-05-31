@@ -48,6 +48,11 @@ public abstract class GeneralActivity extends AppCompatActivity {
         }
     }
 
+    @Nullable
+    public ViewGroup getMasterLayout() {
+        return null;
+    }
+
     @Override
     protected void onPause() {
         if (Global.hideMultitask())

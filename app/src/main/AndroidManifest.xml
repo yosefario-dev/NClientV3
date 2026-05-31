@@ -64,6 +64,9 @@
         </activity-alias>
 
         <activity android:name=".StatusViewerActivity" />
+        <activity
+            android:name=".FavoritesActivity"
+            android:parentActivityName=".MainActivity" />
         <activity android:name=".HistoryActivity" />
         <activity android:name=".BookmarkActivity" />
         <activity android:name=".CommentActivity" />

@@ -90,7 +90,7 @@ public class Global {
     private static String lastVersion, mirror;
     private static int maxHistory, columnCount, maxId, galleryWidth = -1, galleryHeight = -1;
     private static int colPortStat, colLandStat, colPortHist, colLandHist, colPortMain, colLandMain, colPortDownload, colLandDownload, colLandFavorite, colPortFavorite;
-    private static boolean infiniteScrollMain, infiniteScrollFavorite, exactTagMatch;
+    private static boolean infiniteScrollMain, infiniteScrollFavorite, exactTagMatch, defaultFavoriteOnline, defaultFavoriteTabOnline;
     private static int defaultZoom, offscreenLimit;
     private static Point screenSize;
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UQ1A.240205.002) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36";
@@ -265,6 +265,14 @@ public class Global {
         return infiniteScrollFavorite;
     }
 
+    public static boolean isDefaultFavoriteOnline() {
+        return defaultFavoriteOnline;
+    }
+
+    public static boolean isDefaultFavoriteTabOnline() {
+        return defaultFavoriteTabOnline;
+    }
+
 
     private static void initTitleType(@NonNull Context context) {
         String s = context.getSharedPreferences("Settings", 0).getString(context.getString(R.string.key_title_type), "pretty");
@@ -324,6 +332,8 @@ public class Global {
         lockScreen = shared.getBoolean(context.getString(R.string.key_disable_lock), false);
         hideMultitask = shared.getBoolean(context.getString(R.string.key_hide_multitasking), true);
         infiniteScrollFavorite = shared.getBoolean(context.getString(R.string.key_infinite_scroll_favo), false);
+        defaultFavoriteOnline = "online".equals(shared.getString(context.getString(R.string.key_default_favorite), "local"));
+        defaultFavoriteTabOnline = "online".equals(shared.getString(context.getString(R.string.key_default_favorite_tab), "local"));
         infiniteScrollMain = shared.getBoolean(context.getString(R.string.key_infinite_scroll_main), false);
         maxId = shared.getInt(context.getString(R.string.key_max_id), 300000);
         offscreenLimit = Math.max(1, shared.getInt(context.getString(R.string.key_offscreen_limit), 5));

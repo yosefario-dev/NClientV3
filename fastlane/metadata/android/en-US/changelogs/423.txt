@@ -1,0 +1,4 @@
+- Local and online favorites are now one screen with Local and Online tabs
+- Separate settings for the default tab and the default favorite button target
+- Both local and online favorite actions stay one tap away in a gallery
+- Online favoriting (add, remove, and status) works again with the current nhentai API

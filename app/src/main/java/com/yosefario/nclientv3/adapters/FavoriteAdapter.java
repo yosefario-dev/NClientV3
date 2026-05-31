@@ -1,5 +1,6 @@
 package com.yosefario.nclientv3.adapters;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Build;
@@ -13,6 +14,7 @@ import android.widget.Filterable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.yosefario.nclientv3.FavoriteActivity;
 import com.yosefario.nclientv3.GalleryActivity;
@@ -31,9 +33,18 @@ import java.util.Collections;
 import java.util.Locale;
 
 public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> implements Filterable {
+    public interface Host {
+        int getActualPage();
+
+        SwipeRefreshLayout getRefresher();
+
+        void runOnUiThread(Runnable runnable);
+    }
+
     private final int perPage = FavoriteActivity.getEntryPerPage();
     private final SparseIntArray statuses = new SparseIntArray();
-    private final FavoriteActivity activity;
+    private final Activity activity;
+    private final Host host;
     private Gallery[] galleries;
     private CharSequence lastQuery;
     private Cursor cursor;
@@ -41,8 +52,27 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     private boolean sortByTitle = false;
 
     public FavoriteAdapter(FavoriteActivity activity) {
-        boolean online = false;
+        this(activity, new Host() {
+            @Override
+            public int getActualPage() {
+                return activity.getActualPage();
+            }
+
+            @Override
+            public SwipeRefreshLayout getRefresher() {
+                return activity.getRefresher();
+            }
+
+            @Override
+            public void runOnUiThread(Runnable runnable) {
+                activity.runOnUiThread(runnable);
+            }
+        });
+    }
+
+    public FavoriteAdapter(Activity activity, Host host) {
         this.activity = activity;
+        this.host = host;
         this.lastQuery = "";
         setHasStableIds(true);
     }
@@ -146,7 +176,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
                 lastQuery = constraint.toString();
                 LogUtility.d(lastQuery + "LASTQERY");
                 force = false;
-                Cursor c = Queries.FavoriteTable.getAllFavoriteGalleriesCursor(lastQuery, sortByTitle, perPage, (activity.getActualPage() - 1) * perPage);
+                Cursor c = Queries.FavoriteTable.getAllFavoriteGalleriesCursor(lastQuery, sortByTitle, perPage, (host.getActualPage() - 1) * perPage);
                 results.count = c.getCount();
                 results.values = c;
                 LogUtility.d("FILTERING3");
@@ -179,18 +209,18 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
 
     public void forceReload() {
         force = true;
-        activity.runOnUiThread(() -> getFilter().filter(lastQuery));
+        host.runOnUiThread(() -> getFilter().filter(lastQuery));
     }
 
     public void setRefresh(boolean refresh) {
-        activity.runOnUiThread(() -> activity.getRefresher().setRefreshing(refresh));
+        host.runOnUiThread(() -> host.getRefresher().setRefreshing(refresh));
     }
 
     public void clearGalleries() {
         Queries.FavoriteTable.removeAllFavorite();
         int s = getItemCount();
         updateCursor(null);
-        activity.runOnUiThread(() -> notifyItemRangeRemoved(0, s));
+        host.runOnUiThread(() -> notifyItemRangeRemoved(0, s));
     }
 
     private void updateCursor(@Nullable Cursor c) {

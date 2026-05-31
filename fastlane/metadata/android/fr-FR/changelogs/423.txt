@@ -1,0 +1,4 @@
+- Les favoris locaux et en ligne sont désormais réunis sur un seul écran avec les onglets Local et En ligne
+- Réglages distincts pour l'onglet par défaut et pour la cible du bouton de favori
+- Les actions de favori local et en ligne restent accessibles en un appui dans une galerie
+- L'ajout aux favoris en ligne (ajout, suppression et statut) fonctionne à nouveau avec l'API nhentai actuelle
