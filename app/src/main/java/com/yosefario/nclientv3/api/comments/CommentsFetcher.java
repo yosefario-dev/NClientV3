@@ -19,7 +19,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class CommentsFetcher extends Thread {
-    private static final String COMMENT_API_URL = Utility.getBaseUrl() + "api/gallery/%d/comments";
+    private static final String COMMENT_API_URL = Utility.getBaseUrl() + "api/v2/galleries/%d/comments";
     private final int id;
     private final CommentActivity commentActivity;
     private final List<Comment> comments = new ArrayList<>();
@@ -36,7 +36,7 @@ public class CommentsFetcher extends Thread {
     }
 
     private void postResult() {
-        CommentAdapter commentAdapter = new CommentAdapter(commentActivity, comments, id);
+        CommentAdapter commentAdapter = new CommentAdapter(commentActivity, comments);
         commentActivity.setAdapter(commentAdapter);
         commentActivity.runOnUiThread(() -> {
             commentActivity.getRecycler().setAdapter(commentAdapter);
@@ -54,10 +54,24 @@ public class CommentsFetcher extends Thread {
                 return;
             }
             JsonReader reader = new JsonReader(new InputStreamReader(body.byteStream()));
-            if(reader.peek() == JsonToken.BEGIN_ARRAY) {
+            if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    if ("result".equals(reader.nextName()) && reader.peek() == JsonToken.BEGIN_ARRAY) {
+                        reader.beginArray();
+                        while (reader.hasNext())
+                            comments.add(new Comment(reader));
+                        reader.endArray();
+                    } else {
+                        reader.skipValue();
+                    }
+                }
+                reader.endObject();
+            } else if (reader.peek() == JsonToken.BEGIN_ARRAY) {
                 reader.beginArray();
                 while (reader.hasNext())
                     comments.add(new Comment(reader));
+                reader.endArray();
             }
             reader.close();
             response.close();

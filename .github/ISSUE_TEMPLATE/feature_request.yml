@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest an idea or improvement for the app
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before submitting
+      description: Please confirm the following before opening a feature request.
+      options:
+        - label: I have searched the existing requests and this has not been suggested yet.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve, or what need does it address?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative solutions or workarounds you have considered.
+    validations:
+      required: false

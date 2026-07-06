@@ -1,0 +1,13 @@
+- Daha tutarlı bir Material 3 görünümü için uygulama genelinde arayüz yenilendi
+- Giriş ekranı ve oturum açma akışı yeniden düzenlendi
+- Galerilerde yorumların görüntülenmesi düzeltildi
+- Yorum gönderme yeniden düzenlendi ve düzeltildi
+- Kendi yorumlarınızı bir galeriden silin
+- Yorumları galeri sayfasındaki bir düğmeden açın
+- nhentai kaynağınızı veya aynanızı Ayarlar'dan seçin
+- Uygulama simgesini Hesap Makinesi, Saat veya Notlar olarak gizleyin
+- İçeriği son kullanılanlarda gizleme artık uygulama genelinde ekran görüntülerini de engelliyor
+- Bir galeriyi açmak veya arama yapmak için NClientV3'e bağlantı ya da metin paylaşın
+- İsteğe bağlı, saf siyah AMOLED koyu tema eklendi
+- Sayfa seçicinin gezinme düğmelerinin arkasında kalması düzeltildi
+- Çok sayıda küçük düzeltme ve tutarlılık iyileştirmesi

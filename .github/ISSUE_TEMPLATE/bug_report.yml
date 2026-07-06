@@ -1,0 +1,84 @@
+name: Bug report
+description: Report a problem or unexpected behavior in the app
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before submitting
+      description: Please confirm the following before opening a bug report.
+      options:
+        - label: I have searched the existing issues and this has not been reported yet.
+          required: true
+        - label: I am running the latest version of the app.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear and concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide an unambiguous set of steps to reproduce the behavior.
+      placeholder: |
+        1. Go to ...
+        2. Tap on ...
+        3. Scroll down to ...
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: false
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: Shown at the bottom of the Settings screen.
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      description: For example, Android 14.
+    validations:
+      required: true
+  - type: input
+    id: device-model
+    attributes:
+      label: Device model
+      description: For example, Pixel 7 or Samsung Galaxy S23.
+    validations:
+      required: false
+  - type: input
+    id: source-mirror
+    attributes:
+      label: Source / mirror in use
+      description: The source or mirror selected in Settings, if relevant.
+    validations:
+      required: false
+  - type: input
+    id: nhentai-link
+    attributes:
+      label: nhentai link
+      description: If a specific gallery or search triggers the bug, paste its link here.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack trace
+      description: Paste any relevant logs or the stack trace. This is automatically formatted, so no backticks are needed.
+      render: shell
+    validations:
+      required: false

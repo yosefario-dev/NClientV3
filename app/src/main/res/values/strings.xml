@@ -7,7 +7,7 @@
     <string name="key_default_value" translatable="false">default_value</string>
     <string name="key_enable_beta" translatable="false">enable_beta</string>
     <string name="key_save_path" translatable="false">save_path</string>
-    <string name="key_fake_icon" translatable="false">fake_icon</string>
+    <string name="key_disguise" translatable="false">disguise</string>
     <string name="key_local_sort" translatable="false">local_sort_type</string>
     <string name="key_user_agent" translatable="false">setting_user_agent</string>
     <string name="key_title_type" translatable="false">title_type_str</string>
@@ -84,6 +84,14 @@
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
     <string name="captcha_required">Complete the CAPTCHA below, then sign in:</string>
+    <string name="login_account_header">Sign in with your account</string>
+    <string name="or_divider">OR</string>
+    <string name="turnstile_title">Verify you\'re human</string>
+    <string name="turnstile_title_second">One more check</string>
+    <string name="turnstile_subtitle">Cloudflare needs to confirm you\'re not a bot before continuing.</string>
+    <string name="turnstile_subtitle_second">Almost there, confirm once more to finish setting up your key.</string>
+    <string name="turnstile_error">Verification failed. Tap to try again.</string>
+    <string name="login_status_captcha_cancelled">Verification cancelled.</string>
     <string name="manual_api_key_header">Already have an API key?</string>
     <string name="manual_api_key_summary">Generate one in your nhentai account settings and paste it here.</string>
     <string name="prompt_api_key">API key</string>
@@ -219,6 +227,13 @@
     <string name="comments">Comments</string>
     <string name="send">Send</string>
     <string name="send_comment">Send comment…</string>
+    <string name="comment_posted">Comment posted</string>
+    <string name="comment_post_failed">Couldn\'t post comment: %1$s</string>
+    <string name="delete_comment">Delete comment</string>
+    <string name="delete_comment_confirm">Delete this comment? This can\'t be undone.</string>
+    <string name="comment_deleted">Comment deleted</string>
+    <string name="comment_delete_failed">Couldn\'t delete comment: %1$s</string>
+    <string name="nothing_shared">Nothing to open</string>
     <string name="profile_picture">Profile picture</string>
     <string name="send_bug_on_github">Send bug on Github</string>
     <string name="github">Github</string>
@@ -347,6 +362,8 @@
     <string name="status_column_count">Select status column count</string>
     <string name="status_viewer">Status viewer</string>
     <string name="title_hide_multitasking">Hide app content in multitasking</string>
+    <string name="summary_hide_multitasking">Blank the recents preview and block screenshots. Changing this restarts the app.</string>
+    <string name="restarting_to_apply">Restarting to apply…</string>
     <string name="title">Title</string>
     <string name="download_date">Download date</string>
     <string name="page_count">Page count</string>
@@ -363,13 +380,23 @@
     <string name="default_status_4">Dropped</string>
     <string name="default_status_5">Plan to read</string>
     <string name="title_site_mirror">Configure source</string>
+    <string name="source_pick_title">Choose a source</string>
+    <string name="star_title">Enjoying NClientV3?</string>
+    <string name="star_message">If the app has been useful, a star on GitHub really helps the project. It only takes a second.</string>
+    <string name="star_positive">Star on GitHub</string>
+    <string name="star_later">Maybe later</string>
+    <string name="star_never">Don\'t ask again</string>
+    <string name="source_more_soon">More sources coming soon</string>
     <string name="source_not_configured">Not configured</string>
     <string name="source_not_supported">This source is not supported yet</string>
     <string name="configure_source_hint">Configure a source in Settings to get started</string>
     <string name="source_configure_first">Configure a source first</string>
     <string name="disguise_app_in_drawer">Disguise app in drawer</string>
-    <string name="summary_disguise_app">The app will be disguised as a calculator (experimental)</string>
+    <string name="summary_disguise_app">Show the app under a decoy name and icon in the launcher</string>
+    <string name="disguise_none">None (default icon)</string>
     <string name="app_name_fake_calculator">Calculator</string>
+    <string name="app_name_fake_clock">Clock</string>
+    <string name="app_name_fake_notes">Notes</string>
     <string name="delete_galleries">Delete galleries</string>
     <string name="delete">Delete</string>
     <string name="pause_selected_downloads">Pause selected downloads</string>
@@ -421,14 +448,25 @@
         <item>Vertical</item>
     </string-array>
 
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_amoled">AMOLED (true black)</string>
+    <string name="key_dynamic_color" translatable="false">dynamic_color</string>
+    <string name="dynamic_color_title">Dynamic color</string>
+    <string name="dynamic_color_summary">Use colors from your wallpaper (Android 12+)</string>
     <string-array name="theme">
-        <item>Light</item>
-        <item>Dark</item>
+        <item>@string/theme_system</item>
+        <item>@string/theme_light</item>
+        <item>@string/theme_dark</item>
+        <item>@string/theme_amoled</item>
     </string-array>
 
     <string-array name="theme_data" translatable="false">
+        <item>system</item>
         <item>light</item>
         <item>dark</item>
+        <item>amoled</item>
     </string-array>
 
 
@@ -453,6 +491,20 @@
     <string-array name="favorite_target_data" translatable="false">
         <item>local</item>
         <item>online</item>
+    </string-array>
+
+    <string-array name="disguise_entries">
+        <item>@string/disguise_none</item>
+        <item>@string/app_name_fake_calculator</item>
+        <item>@string/app_name_fake_clock</item>
+        <item>@string/app_name_fake_notes</item>
+    </string-array>
+
+    <string-array name="disguise_values" translatable="false">
+        <item>none</item>
+        <item>calculator</item>
+        <item>clock</item>
+        <item>notes</item>
     </string-array>
 
 </resources>

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.yosefario.nclientv3.CopyToClipboardActivity;
 import com.yosefario.nclientv3.GalleryActivity;
+import com.yosefario.nclientv3.CommentActivity;
 import com.yosefario.nclientv3.MainActivity;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.ZoomActivity;
@@ -155,7 +156,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private void loadRelatedLayout(ViewHolder holder) {
-        LogUtility.d("Called RElated");
         final RecyclerView recyclerView = holder.master.findViewById(R.id.recycler);
         if (gallery.isLocal()) {
             holder.master.setVisibility(View.GONE);
@@ -178,6 +178,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         final ViewGroup vg = holder.master.findViewById(R.id.tag_master);
         final TextView idContainer = holder.master.findViewById(R.id.id_num);
         initializeIdContainer(idContainer);
+        bindCommentsButton(holder);
         if (!hasTags()) {
             ViewGroup.LayoutParams layoutParams = vg.getLayoutParams();
             layoutParams.height = 0;
@@ -235,6 +236,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         });
     }
 
+    private void bindCommentsButton(ViewHolder holder) {
+        View commentsButton = holder.master.findViewById(R.id.comments_button);
+        if (commentsButton == null) return;
+        boolean canComment = !gallery.isLocal() && gallery.isValid();
+        commentsButton.setVisibility(canComment ? View.VISIBLE : View.GONE);
+        commentsButton.setOnClickListener(v -> {
+            Intent i = new Intent(context, CommentActivity.class);
+            i.putExtra(context.getPackageName() + ".GALLERYID", gallery.getId());
+            context.startActivity(i);
+        });
+    }
+
     private void addInfoLayout(ViewHolder holder, GalleryData gallery) {
         TextView text = holder.master.findViewById(R.id.page_count);
         text.setText(context.getString(R.string.page_count_format, gallery.getPageCount()));
@@ -283,6 +296,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             params.height = maxImageSize.getHeight();
             params.width = maxImageSize.getWidth();
             imgView.setLayoutParams(params);
+            imgView.setScaleType(scaleTypeForPage(pos));
         }
 
         if (policy == Policy.FULL) {
@@ -304,6 +318,24 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         loadImageOnPolicy(imgView, pos);
 
 
+    }
+
+    private static final double MAX_CROP_FRACTION = 0.05;
+
+    private ImageView.ScaleType scaleTypeForPage(int pos) {
+        if (maxImageSize == null || gallery.getGalleryData() == null)
+            return ImageView.ScaleType.FIT_CENTER;
+        int index = pos - 1;
+        GalleryData data = gallery.getGalleryData();
+        if (index < 0 || index >= data.getPageCount()) return ImageView.ScaleType.FIT_CENTER;
+        Size page = data.getPage(index).getSize();
+        double pw = page.getWidth(), ph = page.getHeight();
+        double fw = maxImageSize.getWidth(), fh = maxImageSize.getHeight();
+        if (pw <= 0 || ph <= 0 || fw <= 0 || fh <= 0) return ImageView.ScaleType.FIT_CENTER;
+        double pageAspect = pw / ph, frameAspect = fw / fh;
+        double kept = Math.min(pageAspect, frameAspect) / Math.max(pageAspect, frameAspect);
+        return (1 - kept) <= MAX_CROP_FRACTION
+            ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER;
     }
 
     private void optionDialog(ImageView imgView, final int pos) {

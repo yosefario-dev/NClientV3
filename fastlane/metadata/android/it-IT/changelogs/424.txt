@@ -1,0 +1,13 @@
+- Interfaccia rinnovata in tutta l'app per un aspetto Material 3 più uniforme
+- Schermata e procedura di accesso ridisegnate
+- Corretta la visualizzazione dei commenti nelle gallerie
+- Pubblicazione dei commenti ridisegnata e corretta
+- Elimina i tuoi commenti da una galleria
+- Apri i commenti da un pulsante nella pagina della galleria
+- Scegli la sorgente o il mirror di nhentai nelle impostazioni
+- Traveste l'icona dell'app da Calcolatrice, Orologio o Note
+- Nascondi contenuto nelle recenti ora blocca anche gli screenshot in tutta l'app
+- Condividi un link o del testo con NClientV3 per aprire la galleria o avviare una ricerca
+- Aggiunto un tema scuro AMOLED nero assoluto opzionale
+- Corretto il selettore di pagina nascosto dietro i pulsanti di navigazione
+- Molte piccole correzioni e miglioramenti di coerenza

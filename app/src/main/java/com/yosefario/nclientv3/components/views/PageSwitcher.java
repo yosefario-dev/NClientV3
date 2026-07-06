@@ -6,12 +6,13 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatEditText;
 import androidx.appcompat.widget.AppCompatImageButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.settings.DefaultDialogs;
@@ -22,7 +23,7 @@ public class PageSwitcher extends MaterialCardView {
 
     private LinearLayout master;
     private AppCompatImageButton prev, next;
-    private AppCompatEditText text;
+    private TextView text;
     @Nullable
     private PageChanger changer;
     private int totalPage;
@@ -79,7 +80,18 @@ public class PageSwitcher extends MaterialCardView {
         prev = master.findViewById(R.id.prev);
         next = master.findViewById(R.id.next);
         text = master.findViewById(R.id.page_index);
+        styleBar();
         addViewListeners();
+    }
+
+    private void styleBar() {
+        float density = getResources().getDisplayMetrics().density;
+        setCardBackgroundColor(MaterialColors.getColor(this,
+            com.google.android.material.R.attr.colorSurface));
+        setRadius(0f);
+        setCardElevation(3f * density);
+        setStrokeWidth(0);
+        setUseCompatPadding(false);
     }
 
     private void addViewListeners() {

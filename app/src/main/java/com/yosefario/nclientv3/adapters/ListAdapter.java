@@ -97,7 +97,11 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         holder.title.setText(ent.getTitle());
         holder.flag.setVisibility(View.VISIBLE);
         if (Global.getOnlyLanguage() == Language.ALL || context instanceof GalleryActivity) {
-            holder.flag.setText(Global.getLanguageFlag(ent.getLanguage()));
+            holder.flag.setText("");
+            holder.flag.setCompoundDrawablesWithIntrinsicBounds(
+                Global.getLanguageIcon(ent.getLanguage()), 0, 0, 0);
+            holder.flag.setCompoundDrawableTintList(
+                android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
         } else holder.flag.setVisibility(View.GONE);
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();

@@ -110,7 +110,11 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
         ImageDownloadUtility.loadImage(activity, ent.getThumbnail(), holder.imgView);
         holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
         holder.title.setText(ent.getTitle());
-        holder.flag.setText(Global.getLanguageFlag(ent.getLanguage()));
+        holder.flag.setText("");
+        holder.flag.setCompoundDrawablesWithIntrinsicBounds(
+            Global.getLanguageIcon(ent.getLanguage()), 0, 0, 0);
+        holder.flag.setCompoundDrawableTintList(
+            android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {

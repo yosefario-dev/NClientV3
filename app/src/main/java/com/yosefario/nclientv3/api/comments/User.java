@@ -33,7 +33,7 @@ public class User implements Parcelable {
                 case "id":
                     id = reader.nextInt();
                     break;
-                case "post_date":
+                case "username":
                     username = reader.nextString();
                     break;
                 case "avatar_url":

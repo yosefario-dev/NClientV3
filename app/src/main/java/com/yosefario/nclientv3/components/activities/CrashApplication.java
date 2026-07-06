@@ -37,8 +37,10 @@ public class CrashApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        // Material 3 dynamic color support (Android 12+)
-        DynamicColors.applyToActivitiesIfAvailable(this);
+        Global.applyNightMode(this);
+        Global.incrementLaunchCount(this);
+        if (Global.isDynamicColorEnabled(this))
+            DynamicColors.applyToActivitiesIfAvailable(this);
         Global.initLanguage(this);
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         Global.initStorage(this);

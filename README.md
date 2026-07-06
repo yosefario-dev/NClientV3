@@ -1,11 +1,9 @@
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="100" alt="NClientV3 icon" />
+  <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" width="100%" alt="NClientV3 - a modernized, unofficial nhentai client" />
 </p>
 
-<h1 align="center">NClientV3</h1>
-
 <p align="center">
-  A modernized, unofficial NHentai Android client.<br>
+  A modernized, unofficial nhentai client for Android.<br>
   Forked from <a href="https://github.com/Dar9586/NClientV2">NClientV2</a> by Dar9586.
 </p>
 <p align="center">
@@ -29,38 +27,50 @@
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="180" />
 </p>
 
-## What's new in V3
+## Highlights
 
-| Change | Details |
-|--------|---------|
-| **Material 3 / Material You** | Dynamic colors, updated theme across all screens |
-| **Fixed image loading** | nhentai CDN migrated to webp — added smart fallback chain |
-| **Android 15+ support** | Edge-to-edge display, status bar fixes |
-| **Gallery detail redesign** | Collapsing toolbar with blurred cover art |
-| **Comments crash fix** | ClassCastException on ImageButton resolved |
-| **Black splash screen** | No more white flash on launch |
-| **Updated User-Agent** | Works with current nhentai |
-| **No tracking** | Removed ACRA crash reporting — zero data sent |
-| **Modern build** | AGP 8.5.2, Gradle 8.9, SDK 35 |
+- **Material 3 throughout.** A consistent Material You redesign across every screen, with optional dynamic color (Android 12+) and a true-black AMOLED theme.
+- **Works with current nhentai.** The v2 API, webp images, and a reworked sign-in flow with the Cloudflare Turnstile check.
+- **Comments that work.** View, post, and delete your own comments, reachable from a button on the gallery page.
+- **Privacy first.** Disguise the launcher icon, hide app content from recents and screenshots, lock the app with a PIN, and send no tracking or analytics.
+- **Configurable source.** Pick your nhentai source or mirror in Settings.
+- **Share into the app.** Send a link or text to NClientV3 to open that gallery or run a search.
 
 ## Features
 
+**Browse and search**
 - Browse and search galleries
-- Search by tags with include/exclude filters
+- Search by tags with include and exclude filters
 - Blur or hide excluded tags
-- Download galleries for offline reading
-- Favorite galleries
-- PIN lock for privacy
 - Random gallery discovery
-- Share galleries & open in browser
-- Bookmarks & history
-- Multi-language support (EN, FR, IT, TR, ZH, DE, ES, JA, RU, UK, AR)
+- Open nhentai links or shared text directly in the app
+
+**Reading and library**
+- Download galleries for offline reading
+- Local and online favorites in one tabbed screen
+- Bookmarks and history
+- Grid view that fills page thumbnails to the edges when the ratio fits
+
+**Account and comments**
+- Reworked login screen and sign-in flow
+- View, post, and delete your own comments
+
+**Privacy**
+- Disguise the app icon as a Calculator, Clock, or Notes
+- Hide app content in recents and block screenshots
+- PIN lock
+- No tracking or crash reporting
+
+**Appearance**
+- Material You dynamic colors (Android 12+)
+- Optional true-black AMOLED theme
+- Available in multiple languages (EN, FR, IT, TR, ZH, DE, ES, JA, RU, UK, AR)
 
 ## Download
 
-Get the latest APK from [**Releases**](https://github.com/yosefario-dev/NClientV3/releases).
+Get it on [F-Droid](https://f-droid.org/packages/com.yosefario.nclientv3/), or grab the latest APK from [Releases](https://github.com/yosefario-dev/NClientV3/releases).
 
-The app includes a built-in self-updater that checks for new releases automatically.
+The app also has a built-in updater that checks for new releases on startup.
 
 ## Building from source
 
@@ -87,11 +97,11 @@ The debug APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
 
 NClientV3 is a fork of [NClientV2](https://github.com/Dar9586/NClientV2). Huge thanks to the original contributors:
 
-- [Dar9586](https://github.com/Dar9586) — original author
-- [Still34](https://github.com/Still34) — code cleanup & Traditional Chinese
-- [TacoTheDank](https://github.com/TacoTheDank) — XML and Gradle cleanup
-- [hmaltr](https://github.com/hmaltr) — Turkish translation
-- [chayleaf](https://github.com/chayleaf) — Cloudflare bypass
+- [Dar9586](https://github.com/Dar9586), original author
+- [Still34](https://github.com/Still34), code cleanup and Traditional Chinese
+- [TacoTheDank](https://github.com/TacoTheDank), XML and Gradle cleanup
+- [hmaltr](https://github.com/hmaltr), Turkish translation
+- [chayleaf](https://github.com/chayleaf), Cloudflare bypass
 - And [many more](https://github.com/Dar9586/NClientV2#contributors)
 
 ## License

@@ -29,6 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.io.File;
 
 public class SettingsActivity extends GeneralActivity {
+    public static final String EXTRA_OPEN_SOURCE_PICKER = "openSourcePicker";
     GeneralPreferenceFragment fragment;
     private ActivityResultLauncher<String> IMPORT_ZIP;
     private ActivityResultLauncher<String> SAVE_SETTINGS;

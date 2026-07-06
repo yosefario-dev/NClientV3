@@ -3,6 +3,7 @@ package com.yosefario.nclientv3.loginapi;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.yosefario.nclientv3.settings.CustomInterceptor;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
@@ -118,6 +119,44 @@ public final class AuthApi {
             throw new IOException(e);
         }
         return postJson(Utility.getBaseUrl() + "api/v2/user/keys", body);
+    }
+
+    @NonNull
+    public static JSONObject postComment(int galleryId, @NonNull String text,
+                                         @NonNull String powChallenge, @NonNull String powNonce,
+                                         @NonNull String captchaResponse) throws IOException {
+        JSONObject body = new JSONObject();
+        try {
+            body.put("body", text);
+            body.put("pow_challenge", powChallenge);
+            body.put("pow_nonce", powNonce);
+            body.put("captcha_response", captchaResponse);
+        } catch (JSONException e) {
+            throw new IOException(e);
+        }
+        Request request = new Request.Builder()
+            .url(Utility.getBaseUrl() + "api/v2/galleries/" + galleryId + "/comments")
+            .tag(CustomInterceptor.Auth.class, CustomInterceptor.Auth.PREFER_USER)
+            .post(RequestBody.create(JSON, body.toString()))
+            .build();
+        try (Response response = Global.getClient().newCall(request).execute()) {
+            return parseJsonOrThrow(response);
+        }
+    }
+
+    public static void deleteComment(int commentId) throws IOException {
+        Request request = new Request.Builder()
+            .url(Utility.getBaseUrl() + "api/v2/comments/" + commentId)
+            .tag(CustomInterceptor.Auth.class, CustomInterceptor.Auth.PREFER_USER)
+            .delete()
+            .build();
+        try (Response response = Global.getClient().newCall(request).execute()) {
+            if (response.code() == HttpURLConnection.HTTP_OK) return;
+            ResponseBody rb = response.body();
+            String text = rb == null ? "" : rb.string();
+            LogUtility.e("AuthApi: delete comment HTTP " + response.code() + " body=" + text);
+            throw new ApiException(response.code(), extractError(text));
+        }
     }
 
     @NonNull

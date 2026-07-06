@@ -99,24 +99,24 @@ public class GalleryActivity extends BaseActivity {
         if (Global.isLockScreen())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Make status bar black — DrawerLayout draws its own scrim with fitsSystemWindows
+        int collapsedBar = com.google.android.material.color.MaterialColors.getColor(
+            findViewById(R.id.drawer_layout), com.google.android.material.R.attr.colorSurfaceContainer);
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
-        drawerLayout.setStatusBarBackgroundColor(Color.BLACK);
+        drawerLayout.setStatusBarBackgroundColor(collapsedBar);
 
-        // Clear M3 AppBarLayout's internal background tint
         AppBarLayout appBarLayout = findViewById(R.id.appbar);
         appBarLayout.setBackgroundColor(Color.TRANSPARENT);
 
-        // Force CTL statusBarScrim to black (M3 may override XML)
         CollapsingToolbarLayout collapsing = findViewById(R.id.collapsing);
-        collapsing.setStatusBarScrimColor(Color.BLACK);
-        collapsing.setContentScrimColor(Color.BLACK);
+        collapsing.setStatusBarScrimColor(collapsedBar);
+        collapsing.setContentScrimColor(collapsedBar);
 
         toolbar = findViewById(R.id.toolbar);
         toolbar.setBackgroundColor(Color.TRANSPARENT);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
+        setupHeaderIconTint();
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
         masterLayout = findViewById(R.id.master_layout);
@@ -248,6 +248,7 @@ public class GalleryActivity extends BaseActivity {
             glide.load(coverUri)
                 .transform(new CenterCrop(), new BlurTransformation(15, 2))
                 .error(jpgFallback)
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade())
                 .into(headerCover);
         } else if (gallery instanceof LocalGallery) {
             java.io.File firstPage = ((LocalGallery) gallery).getPage(1);
@@ -275,8 +276,12 @@ public class GalleryActivity extends BaseActivity {
         collapsing.setOnLongClickListener(listener);
         findViewById(R.id.toolbar).setOnLongClickListener(listener);
 
-        // Use CTL's native multiline title — TextAppearance.App.ExpandedTitle (16sp) is set in XML
         collapsing.setTitle(title);
+        android.widget.TextView expandedTitle = findViewById(R.id.expanded_title);
+        if (expandedTitle != null) {
+            expandedTitle.setText(title);
+            expandedTitle.setOnLongClickListener(listener);
+        }
     }
 
     @Override
@@ -332,6 +337,39 @@ public class GalleryActivity extends BaseActivity {
         item.setShowAsAction(inToolbar ? MenuItem.SHOW_AS_ACTION_IF_ROOM : MenuItem.SHOW_AS_ACTION_NEVER);
     }
 
+    private Menu toolbarMenu;
+    private int headerIconColor = Color.WHITE;
+
+    private void setupHeaderIconTint() {
+        AppBarLayout appbar = findViewById(R.id.appbar);
+        View expandedTitle = findViewById(R.id.expanded_title);
+        int onSurface = com.google.android.material.color.MaterialColors.getColor(
+            appbar, com.google.android.material.R.attr.colorOnSurface);
+        appbar.addOnOffsetChangedListener((AppBarLayout.OnOffsetChangedListener) (bar, offset) -> {
+            int range = bar.getTotalScrollRange();
+            float fraction = range == 0 ? 0f : Math.abs(offset) / (float) range;
+            if (expandedTitle != null) expandedTitle.setAlpha(Math.max(0f, 1f - fraction / 0.7f));
+            int color = fraction > 0.5f ? onSurface : Color.WHITE;
+            if (color != headerIconColor) {
+                headerIconColor = color;
+                applyHeaderIconTint();
+            }
+        });
+    }
+
+    private void applyHeaderIconTint() {
+        if (toolbar == null) return;
+        tintHeaderIcon(toolbar.getNavigationIcon());
+        tintHeaderIcon(toolbar.getOverflowIcon());
+        if (toolbarMenu != null)
+            for (int i = 0; i < toolbarMenu.size(); i++)
+                tintHeaderIcon(toolbarMenu.getItem(i).getIcon());
+    }
+
+    private void tintHeaderIcon(Drawable d) {
+        if (d != null) androidx.core.graphics.drawable.DrawableCompat.setTint(d.mutate(), headerIconColor);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.gallery, menu);
@@ -339,7 +377,8 @@ public class GalleryActivity extends BaseActivity {
 
         menuItemsVisible(menu);
         initFavoriteIcon(menu);
-        Utility.tintMenu(menu);
+        toolbarMenu = menu;
+        applyHeaderIconTint();
         updateColumnCount(false);
         checkOnlineFavoriteStatus();
         return true;

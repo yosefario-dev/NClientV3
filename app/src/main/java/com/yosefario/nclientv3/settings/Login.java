@@ -153,6 +153,10 @@ public class Login {
         return getApiKey() != null;
     }
 
+    public static boolean canComment() {
+        return hasCookie(ACCESS_TOKEN_COOKIE) || hasCookie(REFRESH_TOKEN_COOKIE);
+    }
+
     @Nullable
     public static String getApiKey() {
         if (loginShared == null) return null;

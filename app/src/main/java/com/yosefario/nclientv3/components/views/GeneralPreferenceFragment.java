@@ -8,11 +8,19 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.JsonWriter;
 import android.util.Pair;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import androidx.preference.EditTextPreference;
@@ -31,6 +39,8 @@ import com.yosefario.nclientv3.async.MetadataFetcher;
 import com.yosefario.nclientv3.async.VersionChecker;
 import com.yosefario.nclientv3.components.LocaleManager;
 import com.yosefario.nclientv3.components.launcher.LauncherCalculator;
+import com.yosefario.nclientv3.components.launcher.LauncherClock;
+import com.yosefario.nclientv3.components.launcher.LauncherNotes;
 import com.yosefario.nclientv3.components.launcher.LauncherReal;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
@@ -152,17 +162,18 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
             findPreference(getString(R.string.key_use_rtl)).setVisible(false);
         }
-        findPreference(getString(R.string.key_fake_icon)).setOnPreferenceChangeListener((preference, newValue) -> {
-            PackageManager pm = act.getPackageManager();
-            ComponentName name1 = new ComponentName(act, LauncherReal.class);
-            ComponentName name2 = new ComponentName(act, LauncherCalculator.class);
-            if ((boolean) newValue) {
-                changeLauncher(pm, name1, false);
-                changeLauncher(pm, name2, true);
-            } else {
-                changeLauncher(pm, name1, true);
-                changeLauncher(pm, name2, false);
-            }
+        ListPreference disguisePref = findPreference(getString(R.string.key_disguise));
+        if (disguisePref != null) {
+            disguisePref.setValue(currentDisguise(act.getPackageManager()));
+            disguisePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                applyDisguise(act.getPackageManager(), (String) newValue);
+                return true;
+            });
+        }
+        findPreference(getString(R.string.key_hide_multitasking)).setOnPreferenceChangeListener((preference, newValue) -> {
+            Global.setHideMultitask(Boolean.TRUE.equals(newValue));
+            Toast.makeText(act, R.string.restarting_to_apply, Toast.LENGTH_SHORT).show();
+            new Handler(Looper.getMainLooper()).postDelayed(() -> Global.restartApp(act), 600);
             return true;
         });
         findPreference(getString(R.string.key_use_account_tag)).setEnabled(Login.isLogged());
@@ -261,37 +272,73 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             return true;
         });
 
-        EditTextPreference mirror = findPreference(getString(R.string.key_site_mirror));
+        Preference mirror = findPreference(getString(R.string.key_site_mirror));
         String currentMirror = act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
             .getString(getString(R.string.key_site_mirror), "");
         mirror.setSummary(currentMirror.isEmpty() ? getString(R.string.source_not_configured) : currentMirror);
-        mirror.setOnPreferenceChangeListener((preference, newValue) -> {
-            String value = newValue.toString().trim()
-                .replaceAll("^https?://", "")
-                .replaceAll("/+$", "")
-                .trim();
-            if (value.isEmpty()) {
-                // Allow clearing the source
-                preference.setSummary(getString(R.string.source_not_configured));
-                act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
-                    .putString(getString(R.string.key_site_mirror), "").apply();
-                updateSourceDependentVisibility(false);
-                return false; // we saved manually with cleaned value
-            }
-            if (!value.equalsIgnoreCase(Utility.ORIGINAL_URL)) {
-                Toast.makeText(act, R.string.source_not_supported, Toast.LENGTH_SHORT).show();
-                return false;
-            }
-            // Save the cleaned value
-            act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
-                .putString(getString(R.string.key_site_mirror), value).apply();
-            preference.setSummary(value);
-            updateSourceDependentVisibility(true);
-            return false; // we saved manually with cleaned value
+        mirror.setOnPreferenceClickListener(preference -> {
+            showSourcePicker(preference);
+            return true;
         });
 
         // Hide source-dependent categories when no source is configured
         updateSourceDependentVisibility(!currentMirror.isEmpty());
+
+        if (act.getIntent() != null
+            && act.getIntent().getBooleanExtra(SettingsActivity.EXTRA_OPEN_SOURCE_PICKER, false)) {
+            act.getIntent().removeExtra(SettingsActivity.EXTRA_OPEN_SOURCE_PICKER);
+            new Handler(Looper.getMainLooper()).post(() -> showSourcePicker(mirror));
+        }
+    }
+
+    private void showSourcePicker(Preference preference) {
+        Context act = requireContext();
+        String[] items = {Utility.ORIGINAL_URL, getString(R.string.source_more_soon)};
+        String current = act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
+            .getString(getString(R.string.key_site_mirror), "");
+        boolean nhentaiChecked = current.equalsIgnoreCase(Utility.ORIGINAL_URL);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(act,
+            android.R.layout.simple_list_item_multiple_choice, items) {
+            @Override
+            public boolean areAllItemsEnabled() {
+                return false;
+            }
+
+            @Override
+            public boolean isEnabled(int position) {
+                return position != 1;
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = super.getView(position, convertView, parent);
+                boolean enabled = isEnabled(position);
+                v.setEnabled(enabled);
+                if (v instanceof TextView) ((TextView) v).setEnabled(enabled);
+                v.setAlpha(enabled ? 1f : 0.4f);
+                return v;
+            }
+        };
+        AlertDialog dialog = new MaterialAlertDialogBuilder(act)
+            .setTitle(R.string.source_pick_title)
+            .setAdapter(adapter, null)
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create();
+        dialog.setOnShowListener(d -> {
+            ListView list = dialog.getListView();
+            list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+            list.setItemChecked(0, nhentaiChecked);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String value = list.isItemChecked(0) ? Utility.ORIGINAL_URL : "";
+                act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
+                    .putString(getString(R.string.key_site_mirror), value).apply();
+                preference.setSummary(value.isEmpty() ? getString(R.string.source_not_configured) : value);
+                updateSourceDependentVisibility(!value.isEmpty());
+                dialog.dismiss();
+            });
+        });
+        dialog.show();
     }
 
     private void updateSourceDependentVisibility(boolean visible) {
@@ -332,6 +379,36 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     private void changeLauncher(PackageManager pm, ComponentName name, boolean enabled) {
         int enableState = enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED : PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
         pm.setComponentEnabledSetting(name, enableState, PackageManager.DONT_KILL_APP);
+    }
+
+    private ComponentName disguiseComponent(String value) {
+        Class<?> alias;
+        switch (value == null ? "none" : value) {
+            case "calculator": alias = LauncherCalculator.class; break;
+            case "clock": alias = LauncherClock.class; break;
+            case "notes": alias = LauncherNotes.class; break;
+            default: alias = LauncherReal.class; break;
+        }
+        return new ComponentName(act, alias);
+    }
+
+    private void applyDisguise(PackageManager pm, String value) {
+        ComponentName selected = disguiseComponent(value);
+        changeLauncher(pm, selected, true);
+        for (String other : new String[]{"none", "calculator", "clock", "notes"}) {
+            ComponentName cn = disguiseComponent(other);
+            if (!cn.equals(selected)) changeLauncher(pm, cn, false);
+        }
+    }
+
+    private String currentDisguise(PackageManager pm) {
+        for (String value : new String[]{"calculator", "clock", "notes"}) {
+            if (pm.getComponentEnabledSetting(disguiseComponent(value))
+                == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                return value;
+            }
+        }
+        return "none";
     }
 
 

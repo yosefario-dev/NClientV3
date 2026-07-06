@@ -116,7 +116,12 @@ public class RandomActivity extends GeneralActivity {
         loadedGallery = gallery;
         if (Global.isDestroyed(this)) return;
         ImageDownloadUtility.loadImage(this, gallery.getCover(), thumbnail);
-        language.setText(Global.getLanguageFlag(gallery.getLanguage()));
+        language.setText("");
+        language.setCompoundDrawablesWithIntrinsicBounds(
+            Global.getLanguageIcon(gallery.getLanguage()), 0, 0, 0);
+        language.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(
+            com.google.android.material.color.MaterialColors.getColor(
+                language, com.google.android.material.R.attr.colorOnSurfaceVariant)));
         isFavorite = Favorites.isFavorite(loadedGallery);
         favoriteUpdateButton();
         title.setText(gallery.getTitle());

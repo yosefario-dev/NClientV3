@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -29,6 +30,7 @@ import androidx.appcompat.widget.SearchView;
 import com.google.android.material.appbar.MaterialToolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.RequestManager;
@@ -57,6 +59,7 @@ import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.settings.TagV2;
 import com.yosefario.nclientv3.utility.ImageDownloadUtility;
+import com.yosefario.nclientv3.utility.InsetUtils;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -159,6 +162,7 @@ public class MainActivity extends BaseActivity
         setContentView(R.layout.activity_main);
         //init views and actions
         findUsefulViews();
+        applyContentWindowInsets();
         initializeToolbar();
         initializeNavigationView();
         initializeRecyclerView();
@@ -178,18 +182,25 @@ public class MainActivity extends BaseActivity
             });
             manageDrawer();
             setActivityTitle();
-            if (firstTime) checkUpdate();
+            if (firstTime) {
+                checkUpdate();
+                maybeShowStarPrompt();
+            }
             if (inspector != null) {
                 inspector.start();
             } else {
                 LogUtility.e(getIntent().getExtras());
             }
         } else {
-            // No source configured — show empty shell
             modeType = ModeType.NORMAL;
             refresher.setVisibility(View.GONE);
             pageSwitcher.setVisibility(View.GONE);
             emptyStateText.setVisibility(View.VISIBLE);
+            View configureSource = findViewById(R.id.configure_source_button);
+            configureSource.setVisibility(View.VISIBLE);
+            configureSource.setOnClickListener(v -> startActivity(
+                new Intent(this, SettingsActivity.class)
+                    .putExtra(SettingsActivity.EXTRA_OPEN_SOURCE_PICKER, true)));
             refresher.setEnabled(false);
             manageDrawer();
             setActivityTitle();
@@ -201,6 +212,76 @@ public class MainActivity extends BaseActivity
     @Override
     protected boolean applySystemBarInsets() {
         return false;
+    }
+
+    private void applyContentWindowInsets() {
+        View bottomCover = findViewById(R.id.nav_bar_cover);
+        View topCover = findViewById(R.id.status_bar_cover);
+        int bleed = Math.round(10 * getResources().getDisplayMetrics().density);
+        InsetUtils.onSystemBarInsets(this, bars -> {
+            sizeCover(bottomCover, bars.bottom + bleed, bleed, false);
+            sizeCover(topCover, bars.top + bleed, bleed, true);
+            ViewGroup.MarginLayoutParams plp = (ViewGroup.MarginLayoutParams) pageSwitcher.getLayoutParams();
+            if (plp.bottomMargin != bars.bottom) {
+                plp.bottomMargin = bars.bottom;
+                pageSwitcher.setLayoutParams(plp);
+            }
+            recycler.setPadding(recycler.getPaddingLeft(), recycler.getPaddingTop(),
+                recycler.getPaddingRight(), bars.bottom);
+        });
+        pageSwitcher.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (!paginationInit && pageSwitcher.getHeight() > 0) {
+                paginationInit = true;
+                pageSwitcher.setTranslationY(pageSwitcher.getHeight());
+            }
+        });
+    }
+
+    private void sizeCover(View cover, int height, int bleed, boolean top) {
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) cover.getLayoutParams();
+        lp.height = height;
+        lp.leftMargin = -bleed;
+        lp.rightMargin = -bleed;
+        if (top) lp.topMargin = -bleed;
+        else lp.bottomMargin = -bleed;
+        cover.setLayoutParams(lp);
+    }
+
+    private boolean paginationInit = false;
+    private boolean paginationRevealed = false;
+
+    private void revealPagination() {
+        if (paginationRevealed) return;
+        paginationRevealed = true;
+        pageSwitcher.animate().translationY(0f).setDuration(250)
+            .setInterpolator(new FastOutSlowInInterpolator()).start();
+    }
+
+    private void hidePagination() {
+        if (!paginationRevealed) return;
+        paginationRevealed = false;
+        pageSwitcher.animate().translationY(pageSwitcher.getHeight()).setDuration(220)
+            .setInterpolator(new FastOutSlowInInterpolator()).start();
+    }
+
+    private void maybeShowStarPrompt() {
+        if (!Global.shouldShowStarPrompt(this)) return;
+        Global.markStarPromptShown(this);
+        new MaterialAlertDialogBuilder(this,
+            com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+            .setIcon(R.drawable.ic_star)
+            .setTitle(R.string.star_title)
+            .setMessage(R.string.star_message)
+            .setPositiveButton(R.string.star_positive, (d, w) -> {
+                Global.markStarPromptDone(this);
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/yosefario-dev/NClientV3")));
+                } catch (Exception ignored) {
+                }
+            })
+            .setNegativeButton(R.string.star_later, null)
+            .show();
     }
 
     private void maybeShowReloginDialog() {
@@ -272,6 +353,10 @@ public class MainActivity extends BaseActivity
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (pageSwitcher.getVisibility() == View.VISIBLE) {
+                    if (dy > 0) revealPagination();
+                    else if (dy < 0) hidePagination();
+                }
                 if (inspecting) return;
                 if (!Global.isInfiniteScrollMain()) return;
                 if (refresher.isRefreshing()) return;
@@ -540,12 +625,9 @@ public class MainActivity extends BaseActivity
 
     public void showPageSwitcher(final int actualPage, final int totalPage) {
         pageSwitcher.setPages(totalPage, actualPage);
-
-
         if (Global.isInfiniteScrollMain()) {
             hidePageSwitcher();
         }
-
     }
 
 
@@ -568,8 +650,12 @@ public class MainActivity extends BaseActivity
             idOpenedGallery = -1;
         }
         loadStringLogin();
+        Global.initFromShared(this);//restart all settings
+        if (sourceWasConfigured != Global.isSourceConfigured()) {
+            recreate();
+            return;
+        }
         if (setting != null) {
-            Global.initFromShared(this);//restart all settings
             boolean nowConfigured = Global.isSourceConfigured();
             // If source was just configured, transition from empty state to full UI
             if (!sourceWasConfigured && nowConfigured) {
@@ -689,15 +775,15 @@ public class MainActivity extends BaseActivity
         switch (Global.getOnlyLanguage()) {
             case JAPANESE:
                 item.setTitle(R.string.only_japanese);
-                item.setIcon(R.drawable.ic_jpbw);
+                item.setIcon(R.drawable.ic_lang_japanese);
                 break;
             case CHINESE:
                 item.setTitle(R.string.only_chinese);
-                item.setIcon(R.drawable.ic_cnbw);
+                item.setIcon(R.drawable.ic_lang_chinese);
                 break;
             case ENGLISH:
                 item.setTitle(R.string.only_english);
-                item.setIcon(R.drawable.ic_gbbw);
+                item.setIcon(R.drawable.ic_lang_english);
                 break;
             case ALL:
                 item.setTitle(R.string.all_languages);

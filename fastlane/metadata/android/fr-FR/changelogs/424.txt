@@ -1,0 +1,13 @@
+- Interface rafraîchie dans toute l'application pour un rendu Material 3 plus cohérent
+- Écran et procédure de connexion retravaillés
+- Correction de l'affichage des commentaires sur les galeries
+- Publication des commentaires retravaillée et corrigée
+- Supprimez vos propres commentaires d'une galerie
+- Ouvrez les commentaires depuis un bouton sur la page de la galerie
+- Choisissez votre source ou miroir nhentai dans les paramètres
+- Déguisez l'icône de l'application en Calculatrice, Horloge ou Notes
+- Masquer le contenu dans les récents bloque désormais aussi les captures d'écran dans toute l'application
+- Partagez un lien ou du texte vers NClientV3 pour ouvrir la galerie ou lancer une recherche
+- Ajout d'un thème sombre AMOLED noir absolu en option
+- Correction du sélecteur de page masqué derrière les boutons de navigation
+- De nombreuses corrections mineures et améliorations de cohérence

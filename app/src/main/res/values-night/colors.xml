@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_primary">#A5C8FF</color>
+    <color name="md_on_primary">#003060</color>
+    <color name="md_primary_container">#004788</color>
+    <color name="md_on_primary_container">#D4E3FF</color>
+
+    <color name="md_secondary">#BDC7DC</color>
+    <color name="md_on_secondary">#273141</color>
+    <color name="md_secondary_container">#3E4758</color>
+    <color name="md_on_secondary_container">#D9E3F8</color>
+
+    <color name="md_tertiary">#DBBCE3</color>
+    <color name="md_on_tertiary">#3F2846</color>
+    <color name="md_tertiary_container">#563E5D</color>
+    <color name="md_on_tertiary_container">#F7D8FF</color>
+
+    <color name="md_error">#FFB4AB</color>
+    <color name="md_on_error">#690005</color>
+    <color name="md_error_container">#93000A</color>
+    <color name="md_on_error_container">#FFDAD6</color>
+
+    <color name="md_background">#121316</color>
+    <color name="md_on_background">#E2E2E9</color>
+    <color name="md_surface">#121316</color>
+    <color name="md_on_surface">#E2E2E9</color>
+    <color name="md_surface_variant">#44474E</color>
+    <color name="md_on_surface_variant">#C4C6D0</color>
+
+    <color name="md_surface_container_lowest">#0D0E11</color>
+    <color name="md_surface_container_low">#1A1C1F</color>
+    <color name="md_surface_container">#1E2024</color>
+    <color name="md_surface_container_high">#282A2E</color>
+    <color name="md_surface_container_highest">#333539</color>
+    <color name="md_surface_bright">#383A3E</color>
+    <color name="md_surface_dim">#121316</color>
+
+    <color name="md_outline">#8E9099</color>
+    <color name="md_outline_variant">#44474E</color>
+    <color name="md_inverse_surface">#E2E2E9</color>
+    <color name="md_inverse_on_surface">#2F3036</color>
+    <color name="md_inverse_primary">#1565C0</color>
+    <color name="md_surface_tint">#A5C8FF</color>
+    <color name="md_scrim">#000000</color>
+
+    <color name="nav_bar_cover">#1E2024</color>
+    <color name="on_scrim">#FFFFFF</color>
+</resources>

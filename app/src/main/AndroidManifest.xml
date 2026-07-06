@@ -62,6 +62,32 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
+        <activity-alias
+            android:name=".components.launcher.LauncherClock"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_clock"
+            android:label="@string/app_name_fake_clock"
+            android:roundIcon="@mipmap/ic_launcher_clock_round"
+            android:targetActivity=".PINActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".components.launcher.LauncherNotes"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_notes"
+            android:label="@string/app_name_fake_notes"
+            android:roundIcon="@mipmap/ic_launcher_notes_round"
+            android:targetActivity=".PINActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <activity android:name=".StatusViewerActivity" />
         <activity
@@ -69,7 +95,9 @@
             android:parentActivityName=".MainActivity" />
         <activity android:name=".HistoryActivity" />
         <activity android:name=".BookmarkActivity" />
-        <activity android:name=".CommentActivity" />
+        <activity
+            android:name=".CommentActivity"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".SearchActivity" />
         <activity
             android:name=".MainActivity"
@@ -192,6 +220,22 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.yosefario.nclientv3.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".ShareReceiverActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <provider

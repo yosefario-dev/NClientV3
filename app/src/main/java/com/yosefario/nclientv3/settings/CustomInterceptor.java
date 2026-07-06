@@ -21,6 +21,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class CustomInterceptor implements Interceptor {
+    public enum Auth {PREFER_USER}
+
     private static final String CF_CLEARANCE_COOKIE = "cf_clearance";
     private static final String CSRF_COOKIE = "csrftoken";
     private static final String AUTHORIZATION_HEADER = "Authorization";
@@ -103,10 +105,11 @@ public class CustomInterceptor implements Interceptor {
         Request.Builder builder = request.newBuilder();
         builder.removeHeader("rec");
         builder.removeHeader(Login.AUTH_REFRESH_HEADER);
+        boolean preferUserAuth = request.tag(Auth.class) == Auth.PREFER_USER;
         boolean apiV2 = request.url().encodedPath().startsWith("/api/v2/");
         builder.header("User-Agent", apiV2 ? Global.getApiUserAgent() : Global.getUserAgent());
         if (!authRefresh && shouldAddAuthorization(request)) {
-            String apiKey = Login.getApiKey();
+            String apiKey = preferUserAuth ? null : Login.getApiKey();
             if (apiKey != null) builder.header(AUTHORIZATION_HEADER, "Key " + apiKey);
             else addUserToken(builder);
         }

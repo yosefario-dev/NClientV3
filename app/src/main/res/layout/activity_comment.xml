@@ -15,10 +15,12 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
-    app:cardCornerRadius="12dp"
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -26,37 +28,45 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:weightSum="20">
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="8dp">
 
             <EditText
                 android:id="@+id/commentText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_weight="17"
-                android:ems="10"
+                android:layout_weight="1"
+                android:background="@drawable/bg_comment_input"
+                android:gravity="center_vertical"
                 android:hint="@string/send_comment"
                 android:importantForAutofill="no"
-                android:inputType="textMultiLine"
-                android:maxHeight="250dp"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxHeight="120dp"
                 android:maxLength="1000"
-                android:text="" />
+                android:minHeight="44dp"
+                android:paddingStart="18dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="10dp"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?attr/colorOnSurfaceVariant" />
 
             <ImageButton
                 android:id="@+id/sendButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_weight="3"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:contentDescription="@string/send"
                 android:focusable="true"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp"
-                android:tint="?android:attr/colorForeground"
-                app:srcCompat="@android:drawable/ic_menu_send" />
+                android:scaleType="center"
+                app:srcCompat="@android:drawable/ic_menu_send"
+                app:tint="?attr/colorPrimary" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

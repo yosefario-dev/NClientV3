@@ -372,6 +372,20 @@ public class Global {
         return hideMultitask;
     }
 
+    public static void setHideMultitask(boolean value) {
+        hideMultitask = value;
+    }
+
+    public static void restartApp(Context context) {
+        Context app = context.getApplicationContext();
+        Intent intent = app.getPackageManager().getLaunchIntentForPackage(app.getPackageName());
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            app.startActivity(intent);
+        }
+        Runtime.getRuntime().exit(0);
+    }
+
     public static LocalSortType getLocalSortType() {
         return localSortType;
     }
@@ -466,7 +480,6 @@ public class Global {
             return targetLocale;
         } else {
             Locale targetLocale = new Locale(langCode);
-            System.out.println(targetLocale.getCountry());
             return targetLocale;
         }
     }
@@ -481,9 +494,64 @@ public class Global {
     }
 
     private static ThemeScheme initTheme(Context context) {
-        String h = context.getSharedPreferences("Settings", 0).getString(context.getString(R.string.key_theme_select), "dark");
-        assert h != null;
-        return theme = h.equals("light") ? ThemeScheme.LIGHT : ThemeScheme.DARK;
+        int night = context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return theme = night == Configuration.UI_MODE_NIGHT_YES ? ThemeScheme.DARK : ThemeScheme.LIGHT;
+    }
+
+    public static void applyNightMode(Context context) {
+        String h = themePref(context);
+        int mode;
+        if ("light".equals(h)) mode = AppCompatDelegate.MODE_NIGHT_NO;
+        else if ("dark".equals(h) || "amoled".equals(h)) mode = AppCompatDelegate.MODE_NIGHT_YES;
+        else mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        AppCompatDelegate.setDefaultNightMode(mode);
+    }
+
+    private static String themePref(Context context) {
+        return context.getSharedPreferences("Settings", 0)
+            .getString(context.getString(R.string.key_theme_select), "system");
+    }
+
+    public static boolean isAmoled(Context context) {
+        return "amoled".equals(themePref(context));
+    }
+
+    public static boolean isDynamicColorEnabled(Context context) {
+        return context.getSharedPreferences("Settings", 0)
+            .getBoolean(context.getString(R.string.key_dynamic_color), false);
+    }
+
+    private static final String KEY_LAUNCH_COUNT = "launch_count";
+    private static final String KEY_STAR_PROMPT_DONE = "star_prompt_done";
+    private static final String KEY_STAR_PROMPT_SHOWN = "star_prompt_shown";
+    private static final String KEY_STAR_NEXT_LAUNCH = "star_next_launch";
+    private static final int STAR_PROMPT_THRESHOLD = 5;
+    private static final int STAR_PROMPT_INTERVAL = 20;
+    private static final int STAR_PROMPT_MAX_SHOWS = 2;
+
+    public static void incrementLaunchCount(Context context) {
+        SharedPreferences sp = context.getSharedPreferences("Settings", 0);
+        sp.edit().putLong(KEY_LAUNCH_COUNT, sp.getLong(KEY_LAUNCH_COUNT, 0) + 1).apply();
+    }
+
+    public static boolean shouldShowStarPrompt(Context context) {
+        SharedPreferences sp = context.getSharedPreferences("Settings", 0);
+        return !sp.getBoolean(KEY_STAR_PROMPT_DONE, false)
+            && sp.getInt(KEY_STAR_PROMPT_SHOWN, 0) < STAR_PROMPT_MAX_SHOWS
+            && sp.getLong(KEY_LAUNCH_COUNT, 0) >= sp.getLong(KEY_STAR_NEXT_LAUNCH, STAR_PROMPT_THRESHOLD);
+    }
+
+    public static void markStarPromptShown(Context context) {
+        SharedPreferences sp = context.getSharedPreferences("Settings", 0);
+        long launches = sp.getLong(KEY_LAUNCH_COUNT, 0);
+        sp.edit()
+            .putInt(KEY_STAR_PROMPT_SHOWN, sp.getInt(KEY_STAR_PROMPT_SHOWN, 0) + 1)
+            .putLong(KEY_STAR_NEXT_LAUNCH, launches + STAR_PROMPT_INTERVAL)
+            .apply();
+    }
+
+    public static void markStarPromptDone(Context context) {
+        context.getSharedPreferences("Settings", 0).edit().putBoolean(KEY_STAR_PROMPT_DONE, true).apply();
     }
 
     public static boolean shouldCheckForUpdates(Context context) {
@@ -753,34 +821,12 @@ public class Global {
         return null;
     }
 
-    private static void updateConfigurationNightMode(AppCompatActivity activity, Configuration c) {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        c.uiMode &= (~Configuration.UI_MODE_NIGHT_MASK);//clear night mode bits
-        c.uiMode |= Configuration.UI_MODE_NIGHT_NO; //disable night mode
-    }
-
-    private static void invertFix(AppCompatActivity context) {
-        if (!invertFix) return;
-        Resources resources = context.getResources();
-        Configuration c = new Configuration(resources.getConfiguration());
-        updateConfigurationNightMode(context, c);
-        resources.updateConfiguration(c, resources.getDisplayMetrics());
-    }
-
     public static void initActivity(AppCompatActivity context) {
         initScreenSize(context);
         initGallerySize();
         initLanguage(context);
-        invertFix(context);
-
-        switch (initTheme(context)) {
-            case LIGHT:
-                context.setTheme(R.style.LightTheme);
-                break;
-            case DARK:
-                context.setTheme(R.style.DarkTheme);
-                break;
-        }
+        applyNightMode(context);
+        initTheme(context);
     }
 
     public static void recursiveDelete(File file) {
@@ -829,6 +875,19 @@ public class Global {
                 return "\uD83C\uDFF3";
         }
         return "";
+    }
+
+    public static int getLanguageIcon(Language language) {
+        switch (language) {
+            case CHINESE:
+                return R.drawable.ic_lang_chinese;
+            case ENGLISH:
+                return R.drawable.ic_lang_english;
+            case JAPANESE:
+                return R.drawable.ic_lang_japanese;
+            default:
+                return R.drawable.ic_lang_unknown;
+        }
     }
 
     public enum ThemeScheme {LIGHT, DARK}

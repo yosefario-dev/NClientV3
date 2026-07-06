@@ -6,41 +6,34 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.api.comments.Comment;
-import com.yosefario.nclientv3.settings.AuthRequest;
+import com.yosefario.nclientv3.api.comments.CommentDeleter;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.utility.ImageDownloadUtility;
-import com.yosefario.nclientv3.utility.Utility;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
     private final List<Comment> comments;
     private final DateFormat format;
     private final int userId;
-    private final int galleryId;
     private final AppCompatActivity context;
 
-    public CommentAdapter(AppCompatActivity context, List<Comment> comments, int galleryId) {
+    public CommentAdapter(AppCompatActivity context, List<Comment> comments) {
         this.context = context;
         format = android.text.format.DateFormat.getDateFormat(context);
-        this.galleryId = galleryId;
         this.comments = comments == null ? new ArrayList<>() : comments;
         if (Login.isLogged() && Login.getUser() != null) {
             userId = Login.getUser().getId();
@@ -67,22 +60,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         holder.body.setText(c.getComment());
         holder.date.setText(format.format(c.getPostDate()));
         holder.close.setOnClickListener(v -> {
-            String refererUrl = String.format(Locale.US, Utility.getBaseUrl() + "g/%d/", galleryId);
-            String submitUrl = String.format(Locale.US, Utility.getBaseUrl() + "api/comments/%d/delete", c.getId());
-            new AuthRequest(refererUrl, submitUrl, new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    if (response.body().string().contains("true")) {
-                        comments.remove(position);
-                        context.runOnUiThread(() -> notifyItemRemoved(position));
-                    }
-                }
-            }).setMethod("POST", AuthRequest.EMPTY_BODY).start();
+            int clickPos = holder.getBindingAdapterPosition();
+            if (clickPos == RecyclerView.NO_POSITION) return;
+            Comment target = comments.get(clickPos);
+            new MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.delete_comment)
+                .setMessage(R.string.delete_comment_confirm)
+                .setPositiveButton(R.string.delete, (dialog, which) -> deleteComment(target))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
         });
         if (c.getAvatarUrl() == null || Global.getDownloadPolicy() != Global.DataUsageType.FULL)
             ImageDownloadUtility.loadImage(R.drawable.ic_person, holder.userImage);
@@ -98,6 +84,28 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
     public void addComment(Comment c) {
         comments.add(0, c);
         context.runOnUiThread(() -> notifyItemInserted(0));
+    }
+
+    private void deleteComment(@NonNull Comment target) {
+        CommentDeleter.delete(target.getId(), new CommentDeleter.Callback() {
+            @Override
+            public void onSuccess() {
+                context.runOnUiThread(() -> {
+                    int idx = comments.indexOf(target);
+                    if (idx >= 0) {
+                        comments.remove(idx);
+                        notifyItemRemoved(idx);
+                    }
+                    Toast.makeText(context, R.string.comment_deleted, Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                context.runOnUiThread(() -> Toast.makeText(context,
+                    context.getString(R.string.comment_delete_failed, message), Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

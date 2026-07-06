@@ -1,0 +1,13 @@
+- Refreshed the interface across the whole app for a cleaner, more consistent Material 3 look
+- Reworked the login screen and sign-in flow
+- Fixed viewing comments on galleries
+- Reworked and fixed posting comments
+- Delete your own comments from a gallery
+- Open comments from a button on the gallery page
+- Choose your nhentai source or mirror in Settings
+- Disguise the app icon as a Calculator, Clock, or Notes
+- Hide content in recents now also blocks screenshots app-wide
+- Share a link or text to NClientV3 to open that gallery or search
+- Added an optional true-black AMOLED dark theme
+- Fixed the page selector being hidden behind the navigation buttons
+- Many smaller fixes and consistency improvements throughout

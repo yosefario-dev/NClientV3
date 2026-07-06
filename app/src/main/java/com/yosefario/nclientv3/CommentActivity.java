@@ -2,45 +2,45 @@ package com.yosefario.nclientv3;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.JsonReader;
-import android.util.JsonToken;
-import android.util.JsonWriter;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import com.google.android.material.appbar.MaterialToolbar;
 import androidx.recyclerview.widget.DividerItemDecoration;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.yosefario.nclientv3.adapters.CommentAdapter;
 import com.yosefario.nclientv3.api.comments.Comment;
+import com.yosefario.nclientv3.api.comments.CommentPoster;
 import com.yosefario.nclientv3.api.comments.CommentsFetcher;
 import com.yosefario.nclientv3.components.activities.BaseActivity;
-import com.yosefario.nclientv3.settings.AuthRequest;
+import com.yosefario.nclientv3.components.views.TurnstileDialog;
+import com.yosefario.nclientv3.loginapi.AuthApi;
 import com.yosefario.nclientv3.settings.Login;
-import com.yosefario.nclientv3.utility.Utility;
+import com.yosefario.nclientv3.utility.LogUtility;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Locale;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class CommentActivity extends BaseActivity {
     private static final int MINIUM_MESSAGE_LENGHT = 10;
+
+    private final ExecutorService io = Executors.newSingleThreadExecutor();
+
     private CommentAdapter adapter;
+    private int id;
+    private EditText commentText;
+    private View sendButton;
+    private volatile String captchaSiteKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Global.initActivity(this);
         setContentView(R.layout.activity_comment);
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -48,7 +48,7 @@ public class CommentActivity extends BaseActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         getSupportActionBar().setTitle(R.string.comments);
         findViewById(R.id.page_switcher).setVisibility(View.GONE);
-        int id = getIntent().getIntExtra(getPackageName() + ".GALLERYID", -1);
+        id = getIntent().getIntExtra(getPackageName() + ".GALLERYID", -1);
         if (id == -1) {
             finish();
             return;
@@ -56,65 +56,99 @@ public class CommentActivity extends BaseActivity {
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
         refresher.setOnRefreshListener(() -> new CommentsFetcher(CommentActivity.this, id).start());
-        EditText commentText = findViewById(R.id.commentText);
-        findViewById(R.id.card).setVisibility(Login.isLogged() ? View.VISIBLE : View.GONE);
-        findViewById(R.id.sendButton).setOnClickListener(v -> {
-            if (commentText.getText().toString().length() < MINIUM_MESSAGE_LENGHT) {
-                Toast.makeText(this, getString(R.string.minimum_comment_length, MINIUM_MESSAGE_LENGHT), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            String refererUrl = String.format(Locale.US, Utility.getBaseUrl() + "g/%d/", id);
-            String submitUrl = String.format(Locale.US, Utility.getBaseUrl() + "api/gallery/%d/comments/submit", id);
-            String requestString = createRequestString(commentText.getText().toString());
-            commentText.setText("");
-            RequestBody body = RequestBody.create(MediaType.get("application/json"), requestString);
-            new AuthRequest(refererUrl, submitUrl, new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    JsonReader reader = new JsonReader(response.body().charStream());
-                    Comment comment = null;
-                    reader.beginObject();
-                    while (reader.peek() != JsonToken.END_OBJECT) {
-                        if ("comment".equals(reader.nextName())) {
-                            comment = new Comment(reader);
-                        } else {
-                            reader.skipValue();
-                        }
-                    }
-                    reader.close();
-                    if (comment != null && adapter != null)
-                        adapter.addComment(comment);
-                }
-            }).setMethod("POST", body).start();
-        });
+        commentText = findViewById(R.id.commentText);
+        sendButton = findViewById(R.id.sendButton);
+        findViewById(R.id.card).setVisibility(Login.canComment() ? View.VISIBLE : View.GONE);
+        sendButton.setOnClickListener(v -> onSendClicked());
+        io.execute(this::loadCaptchaInfo);
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         refresher.setRefreshing(true);
         new CommentsFetcher(CommentActivity.this, id).start();
     }
 
-    public void setAdapter(CommentAdapter adapter) {
-        this.adapter = adapter;
+    @Override
+    protected void onDestroy() {
+        io.shutdownNow();
+        super.onDestroy();
     }
 
-    private String createRequestString(String text) {
+    private void loadCaptchaInfo() {
         try {
-            StringWriter writer = new StringWriter();
-            JsonWriter json = new JsonWriter(writer);
-            json.beginObject();
-            json.name("body").value(text);
-            json.endObject();
-            String finalText = writer.toString();
-            json.close();
-            return finalText;
-        } catch (IOException ignore) {
+            captchaSiteKey = AuthApi.fetchCaptchaInfo().siteKey;
+        } catch (IOException e) {
+            LogUtility.e("CommentActivity: failed to fetch captcha info", e);
         }
-        return "";
+    }
+
+    private void onSendClicked() {
+        String text = commentText.getText() == null ? "" : commentText.getText().toString().trim();
+        if (text.length() < MINIUM_MESSAGE_LENGHT) {
+            Toast.makeText(this, getString(R.string.minimum_comment_length, MINIUM_MESSAGE_LENGHT),
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+        requestCaptcha(token -> postComment(text, token));
+    }
+
+    private void requestCaptcha(@NonNull java.util.function.Consumer<String> onToken) {
+        String siteKey = captchaSiteKey;
+        if (TextUtils.isEmpty(siteKey)) {
+            Toast.makeText(this, R.string.login_status_captcha_loading, Toast.LENGTH_SHORT).show();
+            io.execute(() -> {
+                loadCaptchaInfo();
+                runOnUiThread(() -> {
+                    if (!TextUtils.isEmpty(captchaSiteKey)) requestCaptcha(onToken);
+                });
+            });
+            return;
+        }
+        sendButton.setEnabled(false);
+        new TurnstileDialog(this, siteKey, new TurnstileDialog.Callback() {
+            @Override
+            public void onToken(@NonNull String token) {
+                onToken.accept(token);
+            }
+
+            @Override
+            public void onCancelled() {
+                sendButton.setEnabled(true);
+            }
+        }).show(false);
+    }
+
+    private void postComment(@NonNull String text, @NonNull String captchaToken) {
+        sendButton.setEnabled(false);
+        CommentPoster.post(id, text, captchaToken, new CommentPoster.Callback() {
+            @Override
+            public void onProgress(@NonNull String message) {}
+
+            @Override
+            public void onSuccess(@NonNull Comment comment) {
+                runOnUiThread(() -> {
+                    commentText.setText("");
+                    sendButton.setEnabled(true);
+                    if (adapter != null) {
+                        adapter.addComment(comment);
+                        recycler.smoothScrollToPosition(0);
+                    }
+                    Toast.makeText(CommentActivity.this, R.string.comment_posted, Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull String message, boolean captchaRejected) {
+                runOnUiThread(() -> {
+                    sendButton.setEnabled(true);
+                    Toast.makeText(CommentActivity.this,
+                        getString(R.string.comment_post_failed, message), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    public void setAdapter(CommentAdapter adapter) {
+        this.adapter = adapter;
     }
 
     @Override

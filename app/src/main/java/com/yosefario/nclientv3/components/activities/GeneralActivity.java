@@ -54,15 +54,12 @@ public abstract class GeneralActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        if (Global.isAmoled(this))
+            getTheme().applyStyle(R.style.ThemeOverlay_App_Amoled, true);
+        super.onCreate(savedInstanceState);
         if (Global.hideMultitask())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        super.onPause();
-    }
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         Global.initActivity(this);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     }
@@ -77,7 +74,8 @@ public abstract class GeneralActivity extends AppCompatActivity {
             Insets bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, imeBottom));
             return WindowInsetsCompat.CONSUMED;
         });
     }
@@ -92,7 +90,6 @@ public abstract class GeneralActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
         super.onResume();
         lastActivity = new WeakReference<>(this);
         if (!isFastScrollerApplied) {

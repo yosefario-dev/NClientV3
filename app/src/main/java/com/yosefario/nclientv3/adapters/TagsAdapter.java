@@ -217,18 +217,21 @@ public class TagsAdapter extends RecyclerView.Adapter<TagsAdapter.ViewHolder> im
             switch (s) {
                 case DEFAULT:
                     img.setImageDrawable(null);
-                    break;//ImageDownloadUtility.loadImage(R.drawable.ic_void,img); break;
+                    break;
                 case ACCEPTED:
-                    ImageDownloadUtility.loadImage(R.drawable.ic_check, img);
-                    Global.setTint(img.getDrawable());
+                    img.setImageResource(R.drawable.ic_check);
+                    img.setImageTintList(android.content.res.ColorStateList.valueOf(
+                        com.google.android.material.color.MaterialColors.getColor(
+                            img, com.google.android.material.R.attr.colorPrimary)));
                     break;
                 case AVOIDED:
-                    ImageDownloadUtility.loadImage(R.drawable.ic_close, img);
-                    Global.setTint(img.getDrawable());
+                    img.setImageResource(R.drawable.ic_close);
+                    img.setImageTintList(android.content.res.ColorStateList.valueOf(
+                        com.google.android.material.color.MaterialColors.getColor(
+                            img, com.google.android.material.R.attr.colorError)));
                     break;
             }
         });
-
     }
 
     public void addItem() {

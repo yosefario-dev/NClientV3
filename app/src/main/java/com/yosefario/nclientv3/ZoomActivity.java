@@ -97,11 +97,10 @@ public class ZoomActivity extends GeneralActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         setTitle(gallery.getTitle());
 
+        // No FLAG_LAYOUT_NO_LIMITS: it zeroes the bottom inset and hides the page switcher under the nav bar (#15).
         getWindow().setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN);
         if (Global.isLockScreen())
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
