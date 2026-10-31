@@ -25,6 +25,15 @@ public class Comment implements Parcelable {
     private User poster;
     private Date postDate;
     private String body;
+    private int score;
+
+    public Comment(int id, User poster, Date postDate, String body, int score) {
+        this.id = id;
+        this.poster = poster;
+        this.postDate = postDate == null ? new Date(0) : postDate;
+        this.body = body;
+        this.score = score;
+    }
 
     public Comment(JsonReader reader) throws IOException {
         reader.beginObject();
@@ -55,6 +64,7 @@ public class Comment implements Parcelable {
         poster = in.readParcelable(User.class.getClassLoader());
         body = in.readString();
         postDate = new Date(in.readLong());
+        score = in.readInt();
     }
 
     @Override
@@ -68,6 +78,7 @@ public class Comment implements Parcelable {
         dest.writeParcelable(poster, flags);
         dest.writeString(body);
         dest.writeLong(postDate.getTime());
+        dest.writeInt(score);
     }
 
     public int getId() {
@@ -84,6 +95,10 @@ public class Comment implements Parcelable {
 
     public String getComment() {
         return body;
+    }
+
+    public int getScore() {
+        return score;
     }
 
     public int getPosterId() {

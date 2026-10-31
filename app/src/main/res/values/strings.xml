@@ -187,9 +187,35 @@
     <string name="show_related">Show related galleries</string>
     <string name="random_manga">Random gallery</string>
     <string name="save_page">Save page</string>
+    <string name="image_saved">Saved to Download/NClientV3</string>
+    <string name="image_save_failed">Couldn\'t save the image</string>
     <string name="page_count_format" formatted="true">%d pages</string>
     <string name="upload_date_format" formatted="true">Uploaded on %s at %s</string>
     <string name="favorite_count_format" formatted="true">%d favorites</string>
+    <string name="rating_format" formatted="true">Rating: %.2f / 5</string>
+    <string name="uploader_format" formatted="true">Uploaded by %s</string>
+    <string name="min_rating">Minimum rating</string>
+    <string name="rating_off">Off</string>
+    <string name="eh_login_title">e-hentai login</string>
+    <string name="eh_username">Username</string>
+    <string name="eh_password">Password</string>
+    <string name="eh_login_success">Logged in to e-hentai</string>
+    <string name="eh_login_failed">e-hentai login failed</string>
+    <string name="accounts">Accounts</string>
+    <string name="source_nhentai">nhentai</string>
+    <string name="source_ehentai">e-hentai</string>
+    <string name="logged_in_as">Logged in as %s</string>
+    <string name="not_logged_in">Not logged in</string>
+    <string name="eh_logged_in">Logged in</string>
+    <string name="login_required">You need to log in for that</string>
+    <string name="go_to_accounts">Log in</string>
+    <string name="eh_logging_in">Logging in…</string>
+    <string name="eh_verify_human">Please verify you\'re human to continue</string>
+    <string name="eh_invisible_login">Log in as invisible (don\'t appear in active users)</string>
+    <string name="eh_paste_cookies">Paste cookies</string>
+    <string name="eh_paste_cookies_hint">ipb_member_id=…; ipb_pass_hash=…; igneous=…</string>
+    <string name="eh_cookie_login">Log in with cookies</string>
+    <string name="eh_cookie_login_help">Cloudflare can block the in-app login. If it does, sign in to e-hentai.org in a browser, copy your ipb_member_id and ipb_pass_hash cookies (and igneous for exhentai), and paste them with \"Log in with cookies\".</string>
     <string name="favorite_manga">Favorite galleries</string>
     <string name="setting_on_remove_ignored">The galleries with ignored tags will not be shown</string>
     <string name="setting_off_remove_ignored">The galleries with ignored tags will be blurred</string>
@@ -381,6 +407,8 @@
     <string name="default_status_5">Plan to read</string>
     <string name="title_site_mirror">Configure source</string>
     <string name="source_pick_title">Choose a source</string>
+    <string name="manage_sources">Sources</string>
+    <string name="source_detail_unsupported">%1$s galleries can\'t be opened yet</string>
     <string name="star_title">Enjoying NClientV3?</string>
     <string name="star_message">If the app has been useful, a star on GitHub really helps the project. It only takes a second.</string>
     <string name="star_positive">Star on GitHub</string>
@@ -507,4 +535,7 @@
         <item>notes</item>
     </string-array>
 
+    <string name="title_open_links">Open links in the app</string>
+    <string name="summary_open_links">Let NClientV3 open nhentai and e-hentai links</string>
+    <string name="favorite_category">Favorites category</string>
 </resources>

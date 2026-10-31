@@ -21,6 +21,7 @@ import com.yosefario.nclientv3.api.enums.ApiRequestType;
 import com.yosefario.nclientv3.api.enums.TagStatus;
 import com.yosefario.nclientv3.api.enums.TagType;
 import com.yosefario.nclientv3.api.enums.TitleType;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.downloader.GalleryDownloaderManager;
 import com.yosefario.nclientv3.async.downloader.GalleryDownloaderV2;
 import com.yosefario.nclientv3.components.classes.Bookmark;
@@ -48,6 +49,17 @@ public class Queries {
 
     public static int getColumnFromName(Cursor cursor, String name) {
         return cursor.getColumnIndex(name);
+    }
+
+    public static SourceId readSource(Cursor cursor, String column) {
+        int i = cursor.getColumnIndex(column);
+        return i >= 0 && !cursor.isNull(i) ? SourceId.values()[cursor.getInt(i)] : SourceId.NHENTAI;
+    }
+
+    @Nullable
+    public static String readString(Cursor cursor, String column) {
+        int i = cursor.getColumnIndex(column);
+        return i >= 0 ? cursor.getString(i) : null;
     }
 
     public static class DebugDatabase {
@@ -89,6 +101,9 @@ public class Queries {
         public static final String MAX_HEIGHT = "maxH";
         public static final String MIN_WIDTH = "minW";
         public static final String MIN_HEIGHT = "minH";
+        public static final String SOURCE = "source";
+        public static final String TOKEN = "token";
+        public static final String COVER = "cover";
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `Gallery` ( " +
             "`idGallery`      INT               NOT NULL PRIMARY KEY , " +
             "`title_eng`      TINYTEXT          NOT NULL, " +
@@ -101,7 +116,10 @@ public class Queries {
             "`maxW`           INT               NOT NULL," +
             "`maxH`           INT               NOT NULL," +
             "`minW`           INT               NOT NULL," +
-            "`minH`           INT               NOT NULL" +
+            "`minH`           INT               NOT NULL," +
+            "`source`         TINYINT           NOT NULL DEFAULT 0," +
+            "`token`          TEXT," +
+            "`cover`          TEXT" +
             ");";
 
         static void clearGalleries() {
@@ -178,6 +196,15 @@ public class Queries {
             return galleries;
         }
 
+        public static void updateImageData(GenericGallery gallery) {
+            ContentValues values = new ContentValues(2);
+            GalleryData data = gallery.getGalleryData();
+            values.put(MEDIAID, data.getMediaId());
+            values.put(PAGES, data.createPagePath());
+            db.update(TABLE_NAME, values, IDGALLERY + "=? AND " + SOURCE + "=?",
+                new String[]{String.valueOf(gallery.getId()), String.valueOf(gallery.getSource().ordinal())});
+        }
+
         public static void insert(GenericGallery gallery) {
             ContentValues values = new ContentValues(12);
             GalleryData data = gallery.getGalleryData();
@@ -193,6 +220,10 @@ public class Queries {
             values.put(MAX_HEIGHT, gallery.getMaxSize().getHeight());
             values.put(MIN_WIDTH, gallery.getMinSize().getWidth());
             values.put(MIN_HEIGHT, gallery.getMinSize().getHeight());
+            values.put(SOURCE, gallery.getSource().ordinal());
+            values.put(TOKEN, gallery.getToken());
+            if (gallery.getSource() != SourceId.NHENTAI)
+                values.put(COVER, data.getThumbnail().getPath());
             //Insert gallery
             db.insertWithOnConflict(TABLE_NAME, null, values, gallery instanceof Gallery ? SQLiteDatabase.CONFLICT_REPLACE : SQLiteDatabase.CONFLICT_IGNORE);
             TagTable.insertTagsForGallery(data);
@@ -611,6 +642,9 @@ public class Queries {
         public static final String TITLE = "title";
         public static final String THUMB = "thumbType";
         public static final String TIME = "time";
+        public static final String SOURCE = "source";
+        public static final String TOKEN = "token";
+        public static final String THUMB_URL = "thumbUrl";
         public static final String TABLE_NAME = "History";
         public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
         static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `History`(" +
@@ -618,17 +652,24 @@ public class Queries {
             "`mediaId` INT NOT NULL," +
             "`title` TEXT NOT NULL," +
             "`thumbType` TINYINT(1) NOT NULL," +
-            "`time` INT NOT NULL" +
+            "`time` INT NOT NULL," +
+            "`source` TINYINT NOT NULL DEFAULT 0," +
+            "`token` TEXT," +
+            "`thumbUrl` TEXT" +
             ");";
 
         public static void addGallery(SimpleGallery gallery) {
             if (gallery.getId() <= 0) return;
-            ContentValues values = new ContentValues(5);
+            ContentValues values = new ContentValues(8);
             values.put(ID, gallery.getId());
             values.put(MEDIAID, gallery.getMediaId());
             values.put(TITLE, gallery.getTitle());
             values.put(THUMB, gallery.getThumb().ordinal());
             values.put(TIME, new Date().getTime());
+            values.put(SOURCE, gallery.getSource().ordinal());
+            values.put(TOKEN, gallery.getToken());
+            if (gallery.getSource() != SourceId.NHENTAI)
+                values.put(THUMB_URL, gallery.getThumbnail().toString());
             db.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             cleanHistory();
         }

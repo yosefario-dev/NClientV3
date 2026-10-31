@@ -16,6 +16,9 @@ import com.yosefario.nclientv3.adapters.CommentAdapter;
 import com.yosefario.nclientv3.api.comments.Comment;
 import com.yosefario.nclientv3.api.comments.CommentPoster;
 import com.yosefario.nclientv3.api.comments.CommentsFetcher;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiAuth;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiComments;
 import com.yosefario.nclientv3.components.activities.BaseActivity;
 import com.yosefario.nclientv3.components.views.TurnstileDialog;
 import com.yosefario.nclientv3.loginapi.AuthApi;
@@ -25,6 +28,7 @@ import com.yosefario.nclientv3.utility.LogUtility;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 
 public class CommentActivity extends BaseActivity {
@@ -34,6 +38,8 @@ public class CommentActivity extends BaseActivity {
 
     private CommentAdapter adapter;
     private int id;
+    private SourceId source = SourceId.NHENTAI;
+    private String token;
     private EditText commentText;
     private View sendButton;
     private volatile String captchaSiteKey;
@@ -49,22 +55,24 @@ public class CommentActivity extends BaseActivity {
         getSupportActionBar().setTitle(R.string.comments);
         findViewById(R.id.page_switcher).setVisibility(View.GONE);
         id = getIntent().getIntExtra(getPackageName() + ".GALLERYID", -1);
+        source = SourceId.values()[getIntent().getIntExtra(getPackageName() + ".SOURCE", 0)];
+        token = getIntent().getStringExtra(getPackageName() + ".TOKEN");
         if (id == -1) {
             finish();
             return;
         }
         recycler = findViewById(R.id.recycler);
         refresher = findViewById(R.id.refresher);
-        refresher.setOnRefreshListener(() -> new CommentsFetcher(CommentActivity.this, id).start());
+        refresher.setOnRefreshListener(() -> new CommentsFetcher(CommentActivity.this, id, source, token).start());
         commentText = findViewById(R.id.commentText);
         sendButton = findViewById(R.id.sendButton);
-        findViewById(R.id.card).setVisibility(Login.canComment() ? View.VISIBLE : View.GONE);
+        findViewById(R.id.card).setVisibility(canComment() ? View.VISIBLE : View.GONE);
         sendButton.setOnClickListener(v -> onSendClicked());
-        io.execute(this::loadCaptchaInfo);
+        if (source == SourceId.NHENTAI) io.execute(this::loadCaptchaInfo);
         changeLayout(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
         recycler.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         refresher.setRefreshing(true);
-        new CommentsFetcher(CommentActivity.this, id).start();
+        new CommentsFetcher(CommentActivity.this, id, source, token).start();
     }
 
     @Override
@@ -81,6 +89,14 @@ public class CommentActivity extends BaseActivity {
         }
     }
 
+    private boolean isEHentai() {
+        return source == SourceId.EHENTAI || source == SourceId.EXHENTAI;
+    }
+
+    private boolean canComment() {
+        return isEHentai() ? EHentaiAuth.isLoggedIn() : (Login.canComment() && source == SourceId.NHENTAI);
+    }
+
     private void onSendClicked() {
         String text = commentText.getText() == null ? "" : commentText.getText().toString().trim();
         if (text.length() < MINIUM_MESSAGE_LENGHT) {
@@ -88,10 +104,39 @@ public class CommentActivity extends BaseActivity {
                 Toast.LENGTH_SHORT).show();
             return;
         }
-        requestCaptcha(token -> postComment(text, token));
+        if (isEHentai()) postEHentaiComment(text);
+        else requestCaptcha(token -> postComment(text, token));
     }
 
-    private void requestCaptcha(@NonNull java.util.function.Consumer<String> onToken) {
+    private void postEHentaiComment(@NonNull String text) {
+        sendButton.setEnabled(false);
+        io.execute(() -> {
+            try {
+                EHentaiComments.post(id, token, source == SourceId.EXHENTAI, text);
+                runOnUiThread(() -> {
+                    onPosted();
+                    refresher.setRefreshing(true);
+                    new CommentsFetcher(CommentActivity.this, id, source, token).start();
+                });
+            } catch (IOException e) {
+                String message = e.getMessage() == null ? "Network error" : e.getMessage();
+                runOnUiThread(() -> onPostFailed(message));
+            }
+        });
+    }
+
+    private void onPosted() {
+        commentText.setText("");
+        sendButton.setEnabled(true);
+        Toast.makeText(this, R.string.comment_posted, Toast.LENGTH_SHORT).show();
+    }
+
+    private void onPostFailed(String message) {
+        sendButton.setEnabled(true);
+        Toast.makeText(this, getString(R.string.comment_post_failed, message), Toast.LENGTH_LONG).show();
+    }
+
+    private void requestCaptcha(@NonNull Consumer<String> onToken) {
         String siteKey = captchaSiteKey;
         if (TextUtils.isEmpty(siteKey)) {
             Toast.makeText(this, R.string.login_status_captcha_loading, Toast.LENGTH_SHORT).show();
@@ -126,23 +171,17 @@ public class CommentActivity extends BaseActivity {
             @Override
             public void onSuccess(@NonNull Comment comment) {
                 runOnUiThread(() -> {
-                    commentText.setText("");
-                    sendButton.setEnabled(true);
                     if (adapter != null) {
                         adapter.addComment(comment);
                         recycler.smoothScrollToPosition(0);
                     }
-                    Toast.makeText(CommentActivity.this, R.string.comment_posted, Toast.LENGTH_SHORT).show();
+                    onPosted();
                 });
             }
 
             @Override
             public void onFailure(@NonNull String message, boolean captchaRejected) {
-                runOnUiThread(() -> {
-                    sendButton.setEnabled(true);
-                    Toast.makeText(CommentActivity.this,
-                        getString(R.string.comment_post_failed, message), Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> onPostFailed(message));
             }
         });
     }

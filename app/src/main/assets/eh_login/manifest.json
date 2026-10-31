@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "eh-login",
+  "version": "1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "eh-login@nclientv3"
+    }
+  },
+  "permissions": [
+    "cookies",
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "*://*.e-hentai.org/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://forums.e-hentai.org/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

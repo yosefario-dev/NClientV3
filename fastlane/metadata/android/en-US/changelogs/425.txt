@@ -1,0 +1,9 @@
+- New e-hentai source: search, read, download, comment, favorite. Enable in Sources
+- e-hentai login in the app or with cookies (new Accounts screen)
+- Online favorites per source, with e-hentai's 10 lists (hold the star)
+- Open e-hentai links from the browser or share menu
+- Fixed downloads that stopped or saved broken pages
+- Pages now save to Download/NClientV3
+- Fixed favorites not opening or losing their cover
+- Fixed hard-to-see reader and gallery icons
+- Needs Android 8.0+ on 64-bit ARM

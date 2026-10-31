@@ -46,6 +46,8 @@ import com.yosefario.nclientv3.api.enums.SortType;
 import com.yosefario.nclientv3.api.enums.SpecialTagIds;
 import com.yosefario.nclientv3.api.enums.TagStatus;
 import com.yosefario.nclientv3.api.enums.TagType;
+import com.yosefario.nclientv3.api.source.Source;
+import com.yosefario.nclientv3.api.source.SourceManager;
 import com.yosefario.nclientv3.async.ScrapeTags;
 import com.yosefario.nclientv3.async.VersionChecker;
 import com.yosefario.nclientv3.async.database.Queries;
@@ -55,6 +57,8 @@ import com.yosefario.nclientv3.components.GlideX;
 import com.yosefario.nclientv3.components.activities.BaseActivity;
 import com.yosefario.nclientv3.components.views.PageSwitcher;
 import com.yosefario.nclientv3.components.widgets.CustomGridLayoutManager;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.settings.DefaultDialogs;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.settings.TagV2;
@@ -67,6 +71,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -392,7 +397,9 @@ public class MainActivity extends BaseActivity
         boolean configured = Global.isSourceConfigured();
         Menu drawerMenu = navigationView.getMenu();
         // Hide source-dependent drawer items
-        drawerMenu.findItem(R.id.random).setVisible(configured);
+        boolean activeHasRandom = configured
+            && SourceManager.get(Global.getActiveSource()).capabilities().hasRandom();
+        drawerMenu.findItem(R.id.random).setVisible(activeHasRandom);
         drawerMenu.findItem(R.id.tag_manager).setVisible(configured);
         drawerMenu.findItem(R.id.action_login).setVisible(configured);
         invalidateOptionsMenu();
@@ -416,11 +423,7 @@ public class MainActivity extends BaseActivity
 
     private void loadStringLogin() {
         if (loginItem == null) return;
-        if (com.yosefario.nclientv3.settings.Login.getUser() != null)
-            loginItem.setTitle(getString(R.string.login_formatted, com.yosefario.nclientv3.settings.Login.getUser().getUsername()));
-        else
-            loginItem.setTitle(com.yosefario.nclientv3.settings.Login.isLogged() ? R.string.logout : R.string.login);
-
+        loginItem.setTitle(R.string.accounts);
     }
 
     private void hideError() {
@@ -730,7 +733,7 @@ public class MainActivity extends BaseActivity
         showLanguageIcon(menu.findItem(R.id.only_language));
 
         menu.findItem(R.id.only_language).setVisible(modeType == ModeType.NORMAL);
-        menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE);
+        menu.findItem(R.id.random_favorite).setVisible(modeType == ModeType.FAVORITE && Global.getActiveSource() == SourceId.NHENTAI);
 
         initializeSearchItem(menu.findItem(R.id.search));
 
@@ -840,17 +843,27 @@ public class MainActivity extends BaseActivity
     }
 
     private void updateSortType(MenuItem item) {
+        List<SortType> intersection = null;
+        for (Source src : SourceManager.enabled()) {
+            List<SortType> opts = src.capabilities().sortOptions();
+            if (opts == null) continue;
+            if (intersection == null) intersection = new ArrayList<>(opts);
+            else intersection.retainAll(opts);
+        }
+        final List<SortType> sortOptions = (intersection == null || intersection.isEmpty())
+            ? Arrays.asList(SortType.values()) : intersection;
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        for (SortType type : SortType.values())
+        for (SortType type : sortOptions)
             adapter.add(getString(type.getNameId()));
         temporaryType = Global.getSortType();
+        if (!sortOptions.contains(temporaryType)) temporaryType = sortOptions.get(0);
         builder.setIcon(R.drawable.ic_sort).setTitle(R.string.sort_select_type);
-        builder.setSingleChoiceItems(adapter, temporaryType.ordinal(), (dialog, which) -> temporaryType = SortType.values()[which]);
+        builder.setSingleChoiceItems(adapter, sortOptions.indexOf(temporaryType), (dialog, which) -> temporaryType = sortOptions.get(which));
         builder.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                temporaryType = SortType.values()[position];
+                temporaryType = sortOptions.get(position);
                 parent.setSelection(position);
             }
 
@@ -918,12 +931,7 @@ public class MainActivity extends BaseActivity
             intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         } else if (item.getItemId() == R.id.action_login) {
-            if (Login.isLogged())
-                showLogoutForm();
-            else {
-                intent = new Intent(this, LoginActivity.class);
-                startActivity(intent);
-            }
+            startActivity(new Intent(this, AccountActivity.class));
         } else if (item.getItemId() == R.id.random) {
             intent = new Intent(this, RandomActivity.class);
             startActivity(intent);
@@ -934,6 +942,12 @@ public class MainActivity extends BaseActivity
         } else if (item.getItemId() == R.id.status_manager) {
             intent = new Intent(this, StatusViewerActivity.class);
             startActivity(intent);
+        } else if (item.getItemId() == R.id.sources) {
+            DefaultDialogs.showSourceSelector(this, () -> {
+                updateSourceDependentUI();
+                inspector = InspectorV3.basicInspector(this, 1, resetDataset);
+                inspector.start();
+            });
         }
         //drawerLayout.closeDrawer(GravityCompat.START);
         return true;

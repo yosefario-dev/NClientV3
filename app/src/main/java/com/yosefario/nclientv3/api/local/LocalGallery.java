@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import com.yosefario.nclientv3.api.components.GalleryData;
 import com.yosefario.nclientv3.api.components.GenericGallery;
 import com.yosefario.nclientv3.api.enums.SpecialTagIds;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.components.classes.Size;
 import com.yosefario.nclientv3.files.GalleryFolder;
 import com.yosefario.nclientv3.files.PageFile;
@@ -180,6 +181,17 @@ public class LocalGallery extends GenericGallery {
     @Override
     public Type getType() {
         return Type.LOCAL;
+    }
+
+    @Override
+    public SourceId getSource() {
+        return galleryData.getSource();
+    }
+
+    @Override
+    @Nullable
+    public String getToken() {
+        return galleryData.getToken();
     }
 
     @Override

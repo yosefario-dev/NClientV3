@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -21,6 +23,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,8 +38,15 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.yosefario.nclientv3.adapters.GalleryAdapter;
 import com.yosefario.nclientv3.api.InspectorV3;
 import com.yosefario.nclientv3.api.components.Gallery;
+import com.yosefario.nclientv3.api.source.GalleryKey;
+import com.yosefario.nclientv3.api.source.Source;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiFavorites;
+import com.yosefario.nclientv3.api.source.SourceManager;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiAuth;
 import com.yosefario.nclientv3.api.components.GenericGallery;
 import com.yosefario.nclientv3.api.local.LocalGallery;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiUrls;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.BlurTransformation;
 import com.yosefario.nclientv3.components.GlideX;
@@ -78,6 +88,7 @@ public class GalleryActivity extends BaseActivity {
     private boolean isLocalFavorite;
     private MaterialToolbar toolbar;
     private MenuItem onlineFavoriteItem;
+    private int favoriteSlot = EHentaiFavorites.NONE;
     private String statusString;
 
     private int newStatusColor;
@@ -141,6 +152,11 @@ public class GalleryActivity extends BaseActivity {
 
     private boolean tryLoadFromURL() {
         Uri data = getIntent().getData();
+        GalleryKey key = data == null ? null : EHentaiUrls.parseGalleryLink(data.toString());
+        if (key != null) {
+            openFromLink(key.id(), key.source(), key.token());
+            return true;
+        }
         if (data != null && data.getPathSegments().size() >= 2) {//if using an URL
             List<String> params = data.getPathSegments();
             LogUtility.d(params.size() + ": " + params);
@@ -158,21 +174,25 @@ public class GalleryActivity extends BaseActivity {
                     zoom = 0;
                 }
             }
-            InspectorV3.galleryInspector(this, id, new InspectorV3.DefaultInspectorResponse() {
-                @Override
-                public void onSuccess(List<GenericGallery> galleries) {
-                    if (galleries.size() > 0) {
-                        Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
-                        intent.putExtra(getPackageName() + ".GALLERY", galleries.get(0));
-                        intent.putExtra(getPackageName() + ".ZOOM", zoom);
-                        startActivity(intent);
-                    }
-                    finish();
-                }
-            }).start();
+            openFromLink(id, null, null);
             return true;
         }
         return false;
+    }
+
+    private void openFromLink(int id, @Nullable SourceId source, @Nullable String token) {
+        InspectorV3.galleryInspector(this, id, source, token, new InspectorV3.DefaultInspectorResponse() {
+            @Override
+            public void onSuccess(List<GenericGallery> galleries) {
+                if (galleries.size() > 0) {
+                    Intent intent = new Intent(GalleryActivity.this, GalleryActivity.class);
+                    intent.putExtra(getPackageName() + ".GALLERY", galleries.get(0));
+                    intent.putExtra(getPackageName() + ".ZOOM", zoom);
+                    startActivity(intent);
+                }
+                finish();
+            }
+        }).start();
     }
 
     private void lookup() {
@@ -230,24 +250,24 @@ public class GalleryActivity extends BaseActivity {
             Gallery g = (Gallery) gallery;
             Uri coverUri = g.getCover();
 
-            // Dumb fallback chain: CDN sometimes uses double-extension names
-            // (cover.jpg.webp, cover.png.webp, cover.webp.webp) instead of
-            // just cover.webp. Try them all if the constructed URL fails.
-            String base = String.format(Locale.US,
-                "https://t.%s/galleries/%d/cover", Utility.getHost(), g.getMediaId());
-
-            RequestBuilder<Drawable> webpFallback = glide.load(base + ".webp.webp")
+            RequestBuilder<Drawable> primary = glide.load(coverUri)
                 .transform(new CenterCrop(), new BlurTransformation(15, 2));
-            RequestBuilder<Drawable> pngFallback = glide.load(base + ".png.webp")
-                .transform(new CenterCrop(), new BlurTransformation(15, 2))
-                .error(webpFallback);
-            RequestBuilder<Drawable> jpgFallback = glide.load(base + ".jpg.webp")
-                .transform(new CenterCrop(), new BlurTransformation(15, 2))
-                .error(pngFallback);
 
-            glide.load(coverUri)
-                .transform(new CenterCrop(), new BlurTransformation(15, 2))
-                .error(jpgFallback)
+            if (g.getSource() == SourceId.NHENTAI) {
+                String base = String.format(Locale.US,
+                    "https://t.%s/galleries/%d/cover", Utility.getHost(), g.getMediaId());
+                RequestBuilder<Drawable> webpFallback = glide.load(base + ".webp.webp")
+                    .transform(new CenterCrop(), new BlurTransformation(15, 2));
+                RequestBuilder<Drawable> pngFallback = glide.load(base + ".png.webp")
+                    .transform(new CenterCrop(), new BlurTransformation(15, 2))
+                    .error(webpFallback);
+                RequestBuilder<Drawable> jpgFallback = glide.load(base + ".jpg.webp")
+                    .transform(new CenterCrop(), new BlurTransformation(15, 2))
+                    .error(pngFallback);
+                primary = primary.error(jpgFallback);
+            }
+
+            primary
                 .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade())
                 .into(headerCover);
         } else if (gallery instanceof LocalGallery) {
@@ -294,7 +314,6 @@ public class GalleryActivity extends BaseActivity {
         return 0;
     }
 
-
     private void applyOnlineFavoriteAppearance(MenuItem item, boolean onlineFavorite, boolean unknown) {
         item.setIcon(onlineFavorite ? R.drawable.ic_star : R.drawable.ic_star_border);
         if (unknown) item.setTitle(R.string.toggle_online_favorite);
@@ -307,10 +326,15 @@ public class GalleryActivity extends BaseActivity {
         item.setTitle(R.string.toggle_favorite);
     }
 
+    private boolean isSourceLoggedIn(SourceId source) {
+        return SourceManager.get(source).isLoggedIn();
+    }
+
     public void initFavoriteIcon(Menu menu) {
-        boolean isLogged = Login.isLogged();
+        boolean isLogged = isSourceLoggedIn(gallery.getSource());
         boolean isValidOnline = gallery.isValid() && !isLocal;
         boolean onlineFavorite = !isLocal && ((Gallery) gallery).isOnlineFavorite();
+        favoriteSlot = onlineFavorite ? Math.max(0, ((Gallery) gallery).getFavoriteSlot()) : EHentaiFavorites.NONE;
         boolean unknown = getIntent().getBooleanExtra(getPackageName() + ".UNKNOWN", false);
 
         MenuItem localItem = menu.findItem(R.id.favorite_manager);
@@ -318,7 +342,9 @@ public class GalleryActivity extends BaseActivity {
         onlineFavoriteItem = onlineItem;
 
         boolean localVisible = isValidOnline;
-        boolean onlineVisible = isValidOnline && isLogged;
+        boolean sourceHasOnlineFav = SourceManager
+            .get(gallery.getSource()).capabilities().hasOnlineFavorites();
+        boolean onlineVisible = isValidOnline && isLogged && sourceHasOnlineFav;
         localItem.setVisible(localVisible);
         onlineItem.setVisible(onlineVisible);
 
@@ -331,10 +357,47 @@ public class GalleryActivity extends BaseActivity {
         else onlineInToolbar = onlineVisible;
         placeFavorite(onlineItem, onlineInToolbar);
         placeFavorite(localItem, !onlineInToolbar);
+
+        boolean categories = onlineVisible && SourceManager
+            .get(gallery.getSource()).capabilities().hasFavoriteCategories();
+        MenuItem categoryItem = menu.findItem(R.id.online_favorite_category);
+        if (categoryItem != null) categoryItem.setVisible(categories);
+        if (categories) {
+            onlineItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        } else {
+            onlineItem.setActionView(null);
+        }
     }
 
     private void placeFavorite(MenuItem item, boolean inToolbar) {
         item.setShowAsAction(inToolbar ? MenuItem.SHOW_AS_ACTION_IF_ROOM : MenuItem.SHOW_AS_ACTION_NEVER);
+    }
+
+    private final Runnable starHold = () -> pickFavoriteCategory();
+    private final int[] starPos = new int[2];
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        View star = findViewById(R.id.add_online_gallery);
+        boolean watch = star != null && star.isShown() && gallery != null && gallery.isValid()
+            && SourceManager.get(gallery.getSource()).capabilities().hasFavoriteCategories();
+        if (!watch) return super.dispatchTouchEvent(ev);
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                star.getLocationOnScreen(starPos);
+                if (ev.getRawX() >= starPos[0] && ev.getRawX() <= starPos[0] + star.getWidth()
+                    && ev.getRawY() >= starPos[1] && ev.getRawY() <= starPos[1] + star.getHeight()) {
+                    star.postDelayed(starHold, ViewConfiguration.getLongPressTimeout());
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                star.removeCallbacks(starHold);
+                break;
+            default:
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private Menu toolbarMenu;
@@ -386,6 +449,7 @@ public class GalleryActivity extends BaseActivity {
 
     private void checkOnlineFavoriteStatus() {
         if (isLocal || !gallery.isValid() || !Login.isLogged()) return;
+        if (gallery.getSource() != SourceId.NHENTAI) return;
         String url = String.format(Locale.US, Utility.getBaseUrl() + "api/v2/galleries/%d/favorite", gallery.getId());
         Request request = new Request.Builder().url(url).get().build();
         Global.client.newCall(request).enqueue(new Callback() {
@@ -408,10 +472,11 @@ public class GalleryActivity extends BaseActivity {
     private void menuItemsVisible(Menu menu) {
         boolean isLogged = Login.isLogged();
         boolean isValidOnline = gallery.isValid() && !isLocal;
+        boolean isNhentai = gallery.getSource() == SourceId.NHENTAI;
         menu.findItem(R.id.download_gallery).setVisible(isValidOnline);
-        menu.findItem(R.id.related).setVisible(isValidOnline);
+        menu.findItem(R.id.related).setVisible(isValidOnline && isNhentai);
         menu.findItem(R.id.comments).setVisible(isValidOnline);
-        menu.findItem(R.id.download_torrent).setVisible(isLogged);
+        menu.findItem(R.id.download_torrent).setVisible(isLogged && isNhentai);
 
         menu.findItem(R.id.share).setVisible(gallery.isValid());
         menu.findItem(R.id.load_internet).setVisible(isLocal && gallery.isValid());
@@ -434,6 +499,8 @@ public class GalleryActivity extends BaseActivity {
                 requestStorage();
         } else if (id == R.id.add_online_gallery) {
             addToFavorite(item);
+        } else if (id == R.id.online_favorite_category) {
+            pickFavoriteCategory();
         } else if (id == R.id.change_view) updateColumnCount(true);
         else if (id == R.id.download_torrent) downloadTorrent();
         else if (id == R.id.load_internet) toInternet();
@@ -442,6 +509,8 @@ public class GalleryActivity extends BaseActivity {
         else if (id == R.id.comments) {
             Intent i = new Intent(this, CommentActivity.class);
             i.putExtra(getPackageName() + ".GALLERYID", gallery.getId());
+            i.putExtra(getPackageName() + ".SOURCE", gallery.getSource().ordinal());
+            i.putExtra(getPackageName() + ".TOKEN", gallery.getToken());
             startActivity(i);
         } else if (id == R.id.related) {
             recycler.smoothScrollToPosition(recycler.getAdapter().getItemCount());
@@ -567,7 +636,7 @@ public class GalleryActivity extends BaseActivity {
         GalleryActivity.this.runOnUiThread(() -> {
             onlineFavoriteItem.setIcon(!nowIsFavorite ? R.drawable.ic_star_border : R.drawable.ic_star);
             onlineFavoriteItem.setTitle(!nowIsFavorite ? R.string.add_to_online_favorite : R.string.remove_from_online_favorites);
-            Global.setTint(onlineFavoriteItem.getIcon());
+            tintHeaderIcon(onlineFavoriteItem.getIcon());
         });
     }
 
@@ -578,37 +647,53 @@ public class GalleryActivity extends BaseActivity {
             isLocalFavorite = !isLocalFavorite;
         }
         item.setIcon(isLocalFavorite ? R.drawable.ic_favorite : R.drawable.ic_favorite_border);
-        Global.setTint(item.getIcon());
+        tintHeaderIcon(item.getIcon());
     }
 
     private void addToFavorite(final MenuItem item) {
-        boolean wasFavorite = onlineFavoriteItem.getTitle().equals(getString(R.string.remove_from_online_favorites));
-        String url = String.format(Locale.US, Utility.getBaseUrl() + "api/v2/galleries/%d/favorite", gallery.getId());
-        String method = wasFavorite ? "DELETE" : "POST";
-        LogUtility.d("Calling: " + method + " " + url);
-        Request request = new Request.Builder()
-            .url(url)
-            .method(method, wasFavorite ? null : AuthRequest.EMPTY_BODY)
-            .build();
-        Global.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
+        setFavoriteSlot(favoriteSlot >= 0 ? EHentaiFavorites.NONE : -2, false);
+    }
 
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                try (Response r = response) {
-                    if (!r.isSuccessful() || r.body() == null) return;
-                    boolean nowIsFavorite;
-                    try {
-                        nowIsFavorite = new JSONObject(r.body().string()).optBoolean("favorited", !wasFavorite);
-                    } catch (JSONException e) {
-                        nowIsFavorite = !wasFavorite;
-                    }
-                    updateIcon(nowIsFavorite);
-                }
+    private void setFavoriteSlot(int slot, boolean fromDialog) {
+        if (slot == -2) slot = gallery.getSource() == SourceId.NHENTAI ? 0 : EHentaiFavorites.addSlot();
+        final int target = slot;
+        final MenuItem item = onlineFavoriteItem;
+        if (item != null) item.setEnabled(false);
+        new Thread(() -> {
+            try {
+                int now = SourceManager.get(gallery.getSource()).setOnlineFavoriteSlot(this,
+                    new GalleryKey(gallery.getSource(), gallery.getId(), gallery.getToken()), target);
+                if (now < EHentaiFavorites.NONE) now = target;
+                favoriteSlot = now;
+                ((Gallery) gallery).setFavoriteSlot(now);
+                updateIcon(now >= 0);
+            } catch (IOException e) {
+                runOnUiThread(() -> Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show());
+            } finally {
+                if (item != null) runOnUiThread(() -> item.setEnabled(true));
             }
-        });
+        }).start();
+    }
+
+    private void pickFavoriteCategory() {
+        if (!gallery.isValid() || isLocal) return;
+        new Thread(() -> {
+            if (!EHentaiFavorites.namesFresh()) EHentaiFavorites.refreshNames(gallery.getSource() == SourceId.EXHENTAI);
+            runOnUiThread(() -> {
+                String[] labels = new String[EHentaiFavorites.SLOT_COUNT];
+                for (int i = 0; i < labels.length; i++) labels[i] = EHentaiFavorites.label(i);
+                new AlertDialog.Builder(this)
+                    .setTitle(R.string.add_to_online_favorite)
+                    .setSingleChoiceItems(labels, favoriteSlot, (dialog, which) -> {
+                        setFavoriteSlot(which, true);
+                        dialog.dismiss();
+                    })
+                    .setNeutralButton(R.string.remove_from_online_favorites, (dialog, which) -> {
+                        setFavoriteSlot(EHentaiFavorites.NONE, true);
+                    })
+                    .show();
+            });
+        }).start();
     }
 
     private void updateColumnCount(boolean increase) {
@@ -648,7 +733,7 @@ public class GalleryActivity extends BaseActivity {
                     item.setIcon(R.drawable.ic_view_4);
                     break;
             }
-            Global.setTint(item.getIcon());
+            tintHeaderIcon(item.getIcon());
 
         }
     }

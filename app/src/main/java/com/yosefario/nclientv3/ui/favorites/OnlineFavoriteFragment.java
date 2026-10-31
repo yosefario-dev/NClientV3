@@ -9,6 +9,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.HorizontalScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,15 +18,21 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.yosefario.nclientv3.AccountActivity;
 import com.yosefario.nclientv3.FavoritesActivity;
 import com.yosefario.nclientv3.GalleryActivity;
-import com.yosefario.nclientv3.LoginActivity;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.adapters.ListAdapter;
 import com.yosefario.nclientv3.api.InspectorV3;
+import com.yosefario.nclientv3.api.source.Source;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.SourceManager;
 import com.yosefario.nclientv3.api.components.GenericGallery;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiFavorites;
 import com.yosefario.nclientv3.async.downloader.DownloadGalleryV2;
 import com.yosefario.nclientv3.components.activities.GeneralActivity;
 import com.yosefario.nclientv3.components.views.PageSwitcher;
@@ -34,6 +41,7 @@ import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.utility.Utility;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OnlineFavoriteFragment extends Fragment {
@@ -42,6 +50,10 @@ public class OnlineFavoriteFragment extends Fragment {
     private PageSwitcher pageSwitcher;
     private View loginCta;
     private View emptyState;
+    private HorizontalScrollView filters;
+    private ChipGroup sourceChips;
+    private Chip listChip;
+    private SourceId shownSource;
 
     private ListAdapter adapter;
     private InspectorV3 inspector = null;
@@ -69,9 +81,15 @@ public class OnlineFavoriteFragment extends Fragment {
         pageSwitcher = view.findViewById(R.id.page_switcher);
         loginCta = view.findViewById(R.id.login_cta_container);
         emptyState = view.findViewById(R.id.empty_state_container);
+        filters = view.findViewById(R.id.favorite_filters);
+        sourceChips = view.findViewById(R.id.source_chips);
+        listChip = view.findViewById(R.id.list_chip);
+        listChip.setOnClickListener(v -> pickViewCategory());
+        listChip.setOnCloseIconClickListener(v -> pickViewCategory());
+        shownSource = null;
 
         view.findViewById(R.id.login_cta_button).setOnClickListener(v ->
-            startActivity(new Intent(requireActivity(), LoginActivity.class)));
+            startActivity(new Intent(requireActivity(), AccountActivity.class)));
 
         adapter = new ListAdapter(activity());
         recycler.setAdapter(adapter);
@@ -112,13 +130,72 @@ public class OnlineFavoriteFragment extends Fragment {
                 inspector.start();
             }
         });
+    }
 
-        if (Login.isLogged()) {
-            wasLogged = true;
-            startFavoriteInspector(1);
-        } else {
-            showLoginCta();
+    private boolean isSourceLoggedIn() {
+        return SourceManager.favoriteSource().isLoggedIn();
+    }
+
+    private void bindSourceChips() {
+        List<Source> sources = SourceManager.favoriteSources();
+        SourceId selected = SourceManager.favoriteSource().id();
+        sourceChips.setOnCheckedStateChangeListener(null);
+        sourceChips.removeAllViews();
+        LayoutInflater inflater = getLayoutInflater();
+        for (Source source : sources) {
+            Chip chip = (Chip) inflater.inflate(R.layout.chip_favorite_source, sourceChips, false);
+            chip.setId(View.generateViewId());
+            chip.setText(source.displayName());
+            chip.setTag(source.id());
+            sourceChips.addView(chip);
+            chip.setChecked(source.id() == selected);
         }
+        sourceChips.setVisibility(sources.size() > 1 ? View.VISIBLE : View.GONE);
+        sourceChips.setOnCheckedStateChangeListener((group, ids) -> {
+            if (!ids.isEmpty()) selectSource((SourceId) group.findViewById(ids.get(0)).getTag());
+        });
+        updateListChip();
+    }
+
+    private void updateListChip() {
+        Source source = SourceManager.favoriteSource();
+        boolean lists = source.capabilities().hasFavoriteCategories() && source.isLoggedIn();
+        listChip.setVisibility(lists ? View.VISIBLE : View.GONE);
+        if (lists)
+            listChip.setText(EHentaiFavorites.label(EHentaiFavorites.viewSlot()));
+        filters.setVisibility(lists || sourceChips.getVisibility() == View.VISIBLE ? View.VISIBLE : View.GONE);
+    }
+
+    private void selectSource(SourceId id) {
+        Global.setFavoriteSource(requireContext(), id);
+        updateListChip();
+        showSelectedSource();
+    }
+
+    private void showSelectedSource() {
+        Source source = SourceManager.favoriteSource();
+        shownSource = source.id();
+        wasLogged = source.isLoggedIn();
+        adapter.restartDataset(new ArrayList<>());
+        onlineTotal = -1;
+        pushTotal(-1);
+        requireActivity().invalidateOptionsMenu();
+        if (wasLogged) startFavoriteInspector(1);
+        else showLoginCta();
+    }
+
+    private void pickViewCategory() {
+        String[] labels = new String[EHentaiFavorites.SLOT_COUNT + 1];
+        for (int i = 0; i < labels.length; i++) labels[i] = EHentaiFavorites.label(i - 1);
+        new MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.favorite_category)
+            .setSingleChoiceItems(labels, EHentaiFavorites.viewSlot() + 1, (dialog, which) -> {
+                EHentaiFavorites.setViewSlot(which - 1);
+                dialog.dismiss();
+                updateListChip();
+                startFavoriteInspector(1);
+            })
+            .show();
     }
 
     private GeneralActivity activity() {
@@ -129,14 +206,9 @@ public class OnlineFavoriteFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Login.initLogin(requireActivity());
-        boolean logged = Login.isLogged();
-        if (logged && !wasLogged) {
-            wasLogged = true;
-            hideLoginCta();
-            startFavoriteInspector(1);
-        } else if (!logged) {
-            wasLogged = false;
-            showLoginCta();
+        bindSourceChips();
+        if (shownSource != SourceManager.favoriteSource().id() || isSourceLoggedIn() != wasLogged) {
+            showSelectedSource();
         } else if (adapter != null) {
             adapter.resetStatuses();
             adapter.notifyDataSetChanged();
@@ -250,6 +322,7 @@ public class OnlineFavoriteFragment extends Fragment {
             super.onSuccess(galleries);
             adapter.restartDataset(galleries);
             runOnUi(() -> {
+                updateListChip();
                 showPageSwitcher(inspector.getPage(), inspector.getPageCount());
                 recycler.smoothScrollToPosition(0);
             });
@@ -271,8 +344,8 @@ public class OnlineFavoriteFragment extends Fragment {
         menu.findItem(R.id.only_language).setVisible(false);
         menu.findItem(R.id.add_bookmark).setVisible(false);
         menu.findItem(R.id.sort_by_name).setVisible(false);
-        boolean logged = Login.isLogged();
-        menu.findItem(R.id.random_favorite).setVisible(logged);
+        boolean logged = isSourceLoggedIn();
+        menu.findItem(R.id.random_favorite).setVisible(logged && SourceManager.favoriteSource().capabilities().hasRandom());
         menu.findItem(R.id.download_page).setVisible(logged);
 
         MenuItem searchItem = menu.findItem(R.id.search);
@@ -296,7 +369,7 @@ public class OnlineFavoriteFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.open_browser) {
-            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(Utility.getBaseUrl() + "favorites/")));
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(SourceManager.favoriteSource().favoritesUrl())));
             return true;
         } else if (item.getItemId() == R.id.random_favorite) {
             openRandomFavorite();
@@ -322,9 +395,13 @@ public class OnlineFavoriteFragment extends Fragment {
         List<GenericGallery> page = current.getGalleries();
         int loaded = page == null ? 0 : page.size();
         if (current.getPage() == 1 && loaded > 0) perPage = loaded;
-        String key = currentQuery + "|" + pageCount;
+        String key = shownSource + "|" + EHentaiFavorites.viewSlot() + "|" + currentQuery + "|" + pageCount;
         if (key.equals(totalKey) && onlineTotal >= 0) {
             pushTotal(onlineTotal);
+            return;
+        }
+        if (current.getTotal() >= 0) {
+            commitTotal(key, current.getTotal());
             return;
         }
         if (pageCount <= 1) {

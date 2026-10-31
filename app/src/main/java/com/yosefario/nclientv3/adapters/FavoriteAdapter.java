@@ -19,7 +19,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.yosefario.nclientv3.FavoriteActivity;
 import com.yosefario.nclientv3.GalleryActivity;
 import com.yosefario.nclientv3.R;
+import com.yosefario.nclientv3.api.InspectorV3;
 import com.yosefario.nclientv3.api.components.Gallery;
+import com.yosefario.nclientv3.api.components.GenericGallery;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.ImageDownloadUtility;
@@ -30,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder> implements Filterable {
@@ -107,7 +111,7 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     public void onBindViewHolder(@NonNull final GenericAdapter.ViewHolder holder, int position) {
         final Gallery ent = galleryFromPosition(holder.getBindingAdapterPosition());
         if (ent == null) return;
-        ImageDownloadUtility.loadImage(activity, ent.getThumbnail(), holder.imgView);
+        ImageDownloadUtility.loadImage(activity, ent.getThumbnail(), ent.getThumbnailFallback(), holder.imgView);
         holder.pages.setText(String.format(Locale.US, "%d", ent.getPageCount()));
         holder.title.setText(ent.getTitle());
         holder.flag.setText("");
@@ -143,11 +147,38 @@ public class FavoriteAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHol
     }
 
     private void startGallery(Gallery ent) {
+        boolean nhentai = ent.getSource() == SourceId.NHENTAI;
+        InspectorV3.galleryInspector(activity, ent.getId(), ent.getSource(), ent.getToken(),
+            new InspectorV3.DefaultInspectorResponse() {
+                @Override
+                public void onSuccess(List<GenericGallery> galleries) {
+                    GenericGallery fresh = galleries.isEmpty() ? null : galleries.get(0);
+                    if (nhentai && !(fresh instanceof Gallery)) {
+                        openStoredGallery(ent);
+                        return;
+                    }
+                    if (fresh == null) return;
+                    if (nhentai) Queries.GalleryTable.updateImageData(fresh);
+                    openGallery(fresh, false);
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    super.onFailure(e);
+                    if (nhentai) openStoredGallery(ent);
+                }
+            }).start();
+    }
+
+    private void openStoredGallery(Gallery ent) {
+        openGallery(ent, true);
+    }
+
+    private void openGallery(GenericGallery gallery, boolean unknown) {
         Intent intent = new Intent(activity, GalleryActivity.class);
-        LogUtility.d(ent + "");
-        intent.putExtra(activity.getPackageName() + ".GALLERY", ent);
-        intent.putExtra(activity.getPackageName() + ".UNKNOWN", true);
-        activity.startActivity(intent);
+        intent.putExtra(activity.getPackageName() + ".GALLERY", gallery);
+        if (unknown) intent.putExtra(activity.getPackageName() + ".UNKNOWN", true);
+        activity.runOnUiThread(() -> activity.startActivity(intent));
     }
 
     public void changePage() {

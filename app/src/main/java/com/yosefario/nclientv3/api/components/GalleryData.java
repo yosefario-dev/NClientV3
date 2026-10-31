@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import com.yosefario.nclientv3.api.enums.ImageExt;
 import com.yosefario.nclientv3.api.enums.ImageType;
 import com.yosefario.nclientv3.api.enums.SpecialTagIds;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.api.enums.TitleType;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.utility.Utility;
@@ -38,6 +39,11 @@ public class GalleryData implements Parcelable {
     @NonNull
     private Date uploadDate = new Date(0);
     private int favoriteCount, id, pageCount, mediaId;
+    private SourceId source = SourceId.NHENTAI;
+    private String token;
+    private String coverUrl;
+    private double rating;
+    private String uploader;
     @NonNull
     private String[] titles = new String[]{"", "", ""};
     @NonNull
@@ -68,6 +74,9 @@ public class GalleryData implements Parcelable {
         readPagePath(cursor.getString(Queries.getColumnFromName(cursor, Queries.GalleryTable.PAGES)));
         pageCount = pages.size();
         this.tags = tagList;
+        source = Queries.readSource(cursor, Queries.GalleryTable.SOURCE);
+        token = Queries.readString(cursor, Queries.GalleryTable.TOKEN);
+        coverUrl = Queries.readString(cursor, Queries.GalleryTable.COVER);
     }
 
     protected GalleryData(Parcel in) {
@@ -82,6 +91,11 @@ public class GalleryData implements Parcelable {
         thumbnail = Objects.requireNonNull(in.readParcelable(Page.class.getClassLoader()));
         pages = Objects.requireNonNull(in.createTypedArrayList(Page.CREATOR));
         valid = in.readByte() != 0;
+        source = SourceId.values()[in.readByte()];
+        token = in.readString();
+        coverUrl = in.readString();
+        rating = in.readDouble();
+        uploader = in.readString();
     }
 
     public static GalleryData fakeData() {
@@ -113,6 +127,21 @@ public class GalleryData implements Parcelable {
                     break;
                 case "id":
                     id = jr.nextInt();
+                    break;
+                case "source":
+                    try {
+                        source = SourceId.valueOf(jr.nextString());
+                    } catch (IllegalArgumentException ignore) {
+                    }
+                    break;
+                case "token":
+                    token = jr.peek() == JsonToken.NULL ? null : jr.nextString();
+                    break;
+                case "rating":
+                    rating = jr.peek() == JsonToken.NULL ? 0 : jr.nextDouble();
+                    break;
+                case "uploader":
+                    uploader = jr.peek() == JsonToken.NULL ? null : jr.nextString();
                     break;
                 case "images":
                     readImages(jr);
@@ -210,6 +239,26 @@ public class GalleryData implements Parcelable {
         return id;
     }
 
+    public SourceId getSource() {
+        return source;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public String getUploader() {
+        return uploader;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -276,6 +325,11 @@ public class GalleryData implements Parcelable {
         dest.writeParcelable(thumbnail, flags);
         dest.writeTypedList(pages);
         dest.writeByte((byte) (valid ? 1 : 0));
+        dest.writeByte((byte) source.ordinal());
+        dest.writeString(token);
+        dest.writeString(coverUrl);
+        dest.writeDouble(rating);
+        dest.writeString(uploader);
     }
 
     private void writeInterval(StringWriter writer, int intervalLen, ImageExt referencePage) {
@@ -304,7 +358,6 @@ public class GalleryData implements Parcelable {
     }
 
     private void readPagePath(String path) throws IOException {
-        System.out.println(path);
         StringReader reader = new StringReader(path + "e");//flag for the end
         int absolutePage = 0;
         int actualChar;
@@ -315,6 +368,7 @@ public class GalleryData implements Parcelable {
                 case 'p':
                 case 'j':
                 case 'g':
+                case 'w':
                     if (specialImages) {
                         cover = new Page(ImageType.COVER, Page.charToExt(actualChar));
                         thumbnail = new Page(ImageType.THUMBNAIL, Page.charToExt(actualChar));

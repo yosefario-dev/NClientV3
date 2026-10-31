@@ -84,7 +84,10 @@ public class CustomInterceptor implements Interceptor {
             }
             return response;
         }
-        if (
+        String requestHost = request.url().host();
+        String primaryHost = Utility.getHost();
+        boolean isPrimarySource = requestHost.equals(primaryHost) || requestHost.endsWith("." + primaryHost);
+        if (isPrimarySource &&
             (response.code() == HttpURLConnection.HTTP_UNAVAILABLE ||
                 response.code() == HttpURLConnection.HTTP_FORBIDDEN)
                 && (!rec || !MANAGER.endInterceptor())) {

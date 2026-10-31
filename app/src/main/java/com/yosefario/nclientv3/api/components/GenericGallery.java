@@ -3,7 +3,11 @@ package com.yosefario.nclientv3.api.components;
 import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.yosefario.nclientv3.api.source.GalleryKey;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.SourceManager;
 import com.yosefario.nclientv3.components.classes.Size;
 import com.yosefario.nclientv3.files.GalleryFolder;
 import com.yosefario.nclientv3.utility.Utility;
@@ -30,7 +34,23 @@ public abstract class GenericGallery implements Parcelable {
     public abstract GalleryFolder getGalleryFolder();
 
     public String sharePageUrl(int i) {
+        if (getSource() != SourceId.NHENTAI) {
+            return SourceManager.get(getSource()).buildGalleryUrl(getKey());
+        }
         return String.format(Locale.US, "https://" + Utility.getHost() + "/g/%d/%d/", getId(), i + 1);
+    }
+
+    public SourceId getSource() {
+        return SourceId.NHENTAI;
+    }
+
+    @Nullable
+    public String getToken() {
+        return null;
+    }
+
+    public GalleryKey getKey() {
+        return GalleryKey.of(getSource(), getId(), getToken());
     }
 
     public boolean isLocal() {

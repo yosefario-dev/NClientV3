@@ -1,20 +1,22 @@
 Un client manga configurabile per Android.
 Fork di NClientV2 di Dar9586, aggiornato per Android moderno.
 
-Richiede Android 7.0 (API 24) e superiore.
+Richiede Android 8.0 (API 26) e superiore, solo ARM a 64 bit.
 
-L'app viene fornita come shell vuota. Configura una fonte supportata nelle impostazioni per sbloccare tutte le funzionalità.
+Scegli le tue fonti nelle impostazioni. Nulla è configurato di default.
 
 Funzionalità
+ - Più fonti, ognuna con il proprio accesso
  - Sfoglia la pagina principale
  - Cerca per query o per tag
  - Includi o escludi tag
  - Sfoca o nascondi i tag esclusi
  - Scarica gallerie
- - Gallerie preferite
+ - Gallerie preferite, in locale o online, con liste dove la fonte le supporta
  - Blocco con PIN
  - Condividi gallerie
  - Apri nel browser
+ - Apri i link supportati nell'app
  - Segnalibri
  - Cronologia
 
@@ -24,4 +26,4 @@ Novità nella V3
  - Correzione del caricamento immagini CDN webp
  - Aggiornamento del sistema di build e delle dipendenze
  - Rimosso il report dei crash / tracciamento
- - L'app viene fornita come shell vuota SFW per impostazione predefinita
+ - Nessuna fonte è configurata finché non ne scegli una

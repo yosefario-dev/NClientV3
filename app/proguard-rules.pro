@@ -21,9 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 -ignorewarnings
--keep class * {
-    public private *;
-}
 #glide proguard
 -keep public class * implements com.bumptech.glide.module.GlideModule
 -keep public class * extends com.bumptech.glide.module.AppGlideModule

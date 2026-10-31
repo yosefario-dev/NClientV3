@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.JsonWriter;
 import android.util.Pair;
 import android.view.View;
@@ -35,6 +36,7 @@ import com.yosefario.nclientv3.PINActivity;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.SettingsActivity;
 import com.yosefario.nclientv3.StatusManagerActivity;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.MetadataFetcher;
 import com.yosefario.nclientv3.async.VersionChecker;
 import com.yosefario.nclientv3.components.LocaleManager;
@@ -42,6 +44,7 @@ import com.yosefario.nclientv3.components.launcher.LauncherCalculator;
 import com.yosefario.nclientv3.components.launcher.LauncherClock;
 import com.yosefario.nclientv3.components.launcher.LauncherNotes;
 import com.yosefario.nclientv3.components.launcher.LauncherReal;
+import com.yosefario.nclientv3.settings.DefaultDialogs;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.Login;
 import com.yosefario.nclientv3.utility.LogUtility;
@@ -141,6 +144,13 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
             Intent i = new Intent(act, StatusManagerActivity.class);
             act.runOnUiThread(() -> act.startActivity(i));
             return false;
+        });
+        Preference openLinks = findPreference("open_links");
+        openLinks.setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S);
+        openLinks.setOnPreferenceClickListener(preference -> {
+            startActivity(new Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
+                Uri.parse("package:" + act.getPackageName())));
+            return true;
         });
         findPreference("col_screen").setOnPreferenceClickListener(preference -> {
             Intent i = new Intent(act, SettingsActivity.class);
@@ -275,14 +285,13 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
         Preference mirror = findPreference(getString(R.string.key_site_mirror));
         String currentMirror = act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
             .getString(getString(R.string.key_site_mirror), "");
-        mirror.setSummary(currentMirror.isEmpty() ? getString(R.string.source_not_configured) : currentMirror);
+        mirror.setSummary(sourceSummary());
         mirror.setOnPreferenceClickListener(preference -> {
             showSourcePicker(preference);
             return true;
         });
 
-        // Hide source-dependent categories when no source is configured
-        updateSourceDependentVisibility(!currentMirror.isEmpty());
+        updateSourceDependentVisibility(Global.isSourceConfigured());
 
         if (act.getIntent() != null
             && act.getIntent().getBooleanExtra(SettingsActivity.EXTRA_OPEN_SOURCE_PICKER, false)) {
@@ -292,53 +301,21 @@ public class GeneralPreferenceFragment extends PreferenceFragmentCompat {
     }
 
     private void showSourcePicker(Preference preference) {
-        Context act = requireContext();
-        String[] items = {Utility.ORIGINAL_URL, getString(R.string.source_more_soon)};
-        String current = act.getSharedPreferences("Settings", Context.MODE_PRIVATE)
-            .getString(getString(R.string.key_site_mirror), "");
-        boolean nhentaiChecked = current.equalsIgnoreCase(Utility.ORIGINAL_URL);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(act,
-            android.R.layout.simple_list_item_multiple_choice, items) {
-            @Override
-            public boolean areAllItemsEnabled() {
-                return false;
-            }
-
-            @Override
-            public boolean isEnabled(int position) {
-                return position != 1;
-            }
-
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View v = super.getView(position, convertView, parent);
-                boolean enabled = isEnabled(position);
-                v.setEnabled(enabled);
-                if (v instanceof TextView) ((TextView) v).setEnabled(enabled);
-                v.setAlpha(enabled ? 1f : 0.4f);
-                return v;
-            }
-        };
-        AlertDialog dialog = new MaterialAlertDialogBuilder(act)
-            .setTitle(R.string.source_pick_title)
-            .setAdapter(adapter, null)
-            .setPositiveButton(R.string.ok, null)
-            .setNegativeButton(R.string.cancel, null)
-            .create();
-        dialog.setOnShowListener(d -> {
-            ListView list = dialog.getListView();
-            list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-            list.setItemChecked(0, nhentaiChecked);
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                String value = list.isItemChecked(0) ? Utility.ORIGINAL_URL : "";
-                act.getSharedPreferences("Settings", Context.MODE_PRIVATE).edit()
-                    .putString(getString(R.string.key_site_mirror), value).apply();
-                preference.setSummary(value.isEmpty() ? getString(R.string.source_not_configured) : value);
-                updateSourceDependentVisibility(!value.isEmpty());
-                dialog.dismiss();
-            });
+        DefaultDialogs.showSourceSelector(requireContext(), () -> {
+            preference.setSummary(sourceSummary());
+            updateSourceDependentVisibility(Global.isSourceConfigured());
         });
-        dialog.show();
+    }
+
+    private String sourceSummary() {
+        if (!Global.isSourceConfigured())
+            return getString(R.string.source_not_configured);
+        StringBuilder sb = new StringBuilder();
+        for (SourceId id : Global.getEnabledSources()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(id.displayName());
+        }
+        return sb.toString();
     }
 
     private void updateSourceDependentVisibility(boolean visible) {

@@ -13,7 +13,7 @@
   <a href="https://github.com/yosefario-dev/NClientV3/releases"><img src="https://img.shields.io/github/v/release/yosefario-dev/NClientV3?include_prereleases&style=for-the-badge&color=ec2854" alt="Release"></a>
   <a href="https://github.com/yosefario-dev/NClientV3/actions"><img src="https://img.shields.io/github/actions/workflow/status/yosefario-dev/NClientV3/build.yml?style=for-the-badge" alt="Build"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/yosefario-dev/NClientV3?style=for-the-badge" alt="License"></a>
-  <img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 7.0+">
+  <img src="https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android 8.0+">
 </p>
 
 ---

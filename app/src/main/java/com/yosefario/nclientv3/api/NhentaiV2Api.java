@@ -11,6 +11,8 @@ import com.yosefario.nclientv3.api.components.Tag;
 import com.yosefario.nclientv3.api.components.TagList;
 import com.yosefario.nclientv3.api.enums.ImageExt;
 import com.yosefario.nclientv3.api.enums.SortType;
+import com.yosefario.nclientv3.api.source.GalleryPayload;
+import com.yosefario.nclientv3.api.source.ListPayload;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
@@ -150,7 +152,7 @@ public class NhentaiV2Api {
             List<SimpleGallery> galleries = parseSimpleGalleryList(result);
             int pageCount = Math.max(1, envelope == null ? 1 : envelope.optInt("num_pages", 1));
             int perPage = envelope == null ? result.length() : envelope.optInt("per_page", result.length());
-            int total = envelope == null ? result.length() : envelope.optInt("total", Math.max(galleries.size(), pageCount * Math.max(1, perPage)));
+            int total = envelope == null ? -1 : envelope.optInt("total", -1);
             LogUtility.d(String.format(Locale.US, "NhentaiV2Api: parsed list galleries=%d pageCount=%d total=%d", galleries.size(), pageCount, total));
             return new ListPayload(galleries, pageCount, perPage, total);
         } catch (JSONException e) {
@@ -351,10 +353,12 @@ public class NhentaiV2Api {
 
     private char extensionToType(String path) {
         if (path == null) return 'j';
-        String lowerPath = path.toLowerCase(Locale.US);
-        if (lowerPath.endsWith(".gif")) return 'g';
-        if (lowerPath.endsWith(".png")) return 'p';
-        if (lowerPath.endsWith(".webp") || lowerPath.endsWith(".avif")) return 'w';
+        String name = path.substring(path.lastIndexOf('/') + 1).toLowerCase(Locale.US);
+        int dot = name.indexOf('.');
+        String ext = dot < 0 ? "" : name.substring(dot + 1);
+        if (ext.startsWith("gif")) return 'g';
+        if (ext.startsWith("png")) return 'p';
+        if (ext.startsWith("webp") || ext.startsWith("avif")) return 'w';
         return 'j';
     }
 
@@ -362,61 +366,4 @@ public class NhentaiV2Api {
         return gallery.optBoolean("favorite") || gallery.optBoolean("is_favorite") || gallery.optBoolean("is_favorited");
     }
 
-    public static class GalleryPayload {
-        private final int id;
-        private final String json;
-        private final List<SimpleGallery> related;
-        private final boolean favorite;
-
-        GalleryPayload(int id, String json, List<SimpleGallery> related, boolean favorite) {
-            this.id = id;
-            this.json = json;
-            this.related = related;
-            this.favorite = favorite;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public String getJson() {
-            return json;
-        }
-
-        public List<SimpleGallery> getRelated() {
-            return related;
-        }
-
-        public boolean isFavorite() {
-            return favorite;
-        }
-    }
-
-    public static class ListPayload {
-        private final List<SimpleGallery> galleries;
-        private final int pageCount, perPage, total;
-
-        private ListPayload(List<SimpleGallery> galleries, int pageCount, int perPage, int total) {
-            this.galleries = galleries;
-            this.pageCount = pageCount;
-            this.perPage = perPage;
-            this.total = total;
-        }
-
-        public List<SimpleGallery> getGalleries() {
-            return galleries;
-        }
-
-        public int getPageCount() {
-            return pageCount;
-        }
-
-        public int getPerPage() {
-            return perPage;
-        }
-
-        public int getTotal() {
-            return total;
-        }
-    }
 }

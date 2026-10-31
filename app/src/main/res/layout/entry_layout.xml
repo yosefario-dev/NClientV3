@@ -87,6 +87,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/source_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/entry_background"
+            android:paddingStart="6dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="2dp"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/flag" />
+
         <View
             android:id="@+id/overlay"
             android:layout_width="0dp"

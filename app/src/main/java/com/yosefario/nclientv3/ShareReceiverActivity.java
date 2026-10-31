@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
 
+import com.yosefario.nclientv3.api.source.GalleryKey;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiUrls;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,9 +37,14 @@ public class ShareReceiverActivity extends Activity {
             Toast.makeText(this, R.string.nothing_shared, Toast.LENGTH_SHORT).show();
             return;
         }
+        GalleryKey ehGallery = EHentaiUrls.parseGalleryLink(shared);
         Matcher gallery = GALLERY.matcher(shared);
         Matcher url = NH_URL.matcher(shared);
-        if (gallery.find()) {
+        if (ehGallery != null) {
+            startForwarded(new Intent(this, GalleryActivity.class)
+                .setData(Uri.parse(EHentaiUrls.galleryLink(ehGallery)))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } else if (gallery.find()) {
             openGallery(gallery.group(1));
         } else if (url.find()) {
             openUrl(url.group());

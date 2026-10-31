@@ -28,6 +28,7 @@ import com.yosefario.nclientv3.api.enums.Language;
 import com.yosefario.nclientv3.api.enums.SpecialTagIds;
 import com.yosefario.nclientv3.api.enums.TagStatus;
 import com.yosefario.nclientv3.api.enums.TagType;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.activities.GeneralActivity;
 import com.yosefario.nclientv3.components.widgets.ChipTag;
@@ -207,6 +208,32 @@ public class SearchActivity extends GeneralActivity {
         });
         fromDate.setOnClickListener(v -> showUnitDialog(fromDate, true));
         toDate.setOnClickListener(v -> showUnitDialog(toDate, false));
+        initRatingRange();
+    }
+
+    private void initRatingRange() {
+        LinearLayout ratingLayout = findViewById(R.id.rating_range);
+        if (!Global.isSourceEnabled(SourceId.EHENTAI)) {
+            ratingLayout.setVisibility(View.GONE);
+            return;
+        }
+        ratingLayout.setVisibility(View.VISIBLE);
+        ((TextView) ratingLayout.findViewById(R.id.title)).setText(R.string.min_rating);
+        ratingLayout.findViewById(R.id.rangeSeparator).setVisibility(View.GONE);
+        ratingLayout.findViewById(R.id.toButton).setVisibility(View.GONE);
+        Button ratingButton = ratingLayout.findViewById(R.id.fromButton);
+        ratingButton.setText(R.string.rating_off);
+        final int[] values = {Ranges.UNDEFINED, 2, 3, 4, 5};
+        final String[] labels = {getString(R.string.rating_off), "2★", "3★", "4★", "5★"};
+        ratingButton.setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.min_rating)
+            .setIcon(R.drawable.ic_star)
+            .setItems(labels, (dialog, which) -> {
+                ranges.setMinRating(values[which]);
+                ratingButton.setText(labels[which]);
+                if (values[which] != Ranges.UNDEFINED) advanced = true;
+            })
+            .show());
     }
 
     private void showUnitDialog(Button button, boolean from) {

@@ -1,5 +1,7 @@
 package com.yosefario.nclientv3.utility;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -7,8 +9,12 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -16,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.settings.Global;
 
@@ -23,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -41,7 +49,8 @@ public class Utility {
 
 
     public static String getHost() {
-        return Global.getMirror();
+        String mirror = Global.getMirror();
+        return (mirror == null || mirror.isEmpty()) ? ORIGINAL_URL : mirror;
     }
 
     private static void parseEscapedCharacter(Reader reader, Writer writer) throws IOException {
@@ -124,13 +133,55 @@ public class Utility {
 
     @Nullable
     private static Bitmap drawableToBitmap(Drawable dra) {
-        if (!(dra instanceof BitmapDrawable)) return null;
-        return ((BitmapDrawable) dra).getBitmap();
+        while (dra instanceof LayerDrawable) {
+            LayerDrawable layers = (LayerDrawable) dra;
+            if (layers.getNumberOfLayers() == 0) return null;
+            dra = layers.getDrawable(layers.getNumberOfLayers() - 1);
+        }
+        if (dra instanceof BitmapDrawable) return ((BitmapDrawable) dra).getBitmap();
+        if (dra instanceof GifDrawable) return ((GifDrawable) dra).getFirstFrame();
+        return null;
     }
 
-    public static void saveImage(Drawable drawable, File output) {
-        Bitmap b = drawableToBitmap(drawable);
-        if (b != null) saveImage(b, output);
+    public static boolean saveImageToDownloads(Context context, Drawable drawable, String displayName) {
+        Bitmap bitmap = drawableToBitmap(drawable);
+        if (bitmap == null) return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentResolver resolver = context.getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, displayName);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/NClientV3");
+            values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+            Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) return false;
+            boolean ok;
+            try (OutputStream out = resolver.openOutputStream(uri)) {
+                ok = out != null && bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out);
+            } catch (IOException e) {
+                LogUtility.e(e.getLocalizedMessage(), e);
+                ok = false;
+            }
+            if (!ok) {
+                resolver.delete(uri, null, null);
+                return false;
+            }
+            values.clear();
+            values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            resolver.update(uri, values, null, null);
+            return true;
+        }
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "NClientV3");
+        if (!dir.isDirectory() && !dir.mkdirs()) return false;
+        File output = new File(dir, displayName);
+        try (FileOutputStream out = new FileOutputStream(output)) {
+            if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out)) return false;
+        } catch (IOException e) {
+            LogUtility.e(e.getLocalizedMessage(), e);
+            return false;
+        }
+        MediaScannerConnection.scanFile(context, new String[]{output.getAbsolutePath()}, new String[]{"image/jpeg"}, null);
+        return true;
     }
 
     private static void saveImage(@NonNull Bitmap bitmap, @NonNull File output) {

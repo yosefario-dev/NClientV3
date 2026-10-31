@@ -1,20 +1,22 @@
 A configurable manga client for Android.
 Forked from NClientV2 by Dar9586, updated for modern Android.
 
-Requires Android 7.0 (API 24) and above.
+Requires Android 8.0 (API 26) and above, 64-bit ARM only.
 
-The app ships as an empty shell. Configure a supported source in Settings to unlock full functionality.
+Choose your sources in Settings. Nothing is set up by default.
 
 Features
+ - Multiple sources, each with its own login
  - Browse main page
  - Search by query or tags
  - Include or exclude tags
  - Blur or hide excluded tags
  - Download galleries
- - Favorite galleries
+ - Favorite galleries, locally or online, with lists where the source has them
  - PIN lock for privacy
  - Share galleries
  - Open in browser
+ - Open supported links in the app
  - Bookmarks
  - History
 
@@ -24,4 +26,4 @@ What's new in V3
  - Fixed CDN webp image loading
  - Updated build system and dependencies
  - Removed crash reporting / tracking
- - App ships as SFW empty shell by default
+ - No source is set up until you choose one

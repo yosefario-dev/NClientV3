@@ -6,6 +6,8 @@ import android.text.Layout;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -21,6 +23,7 @@ import com.yosefario.nclientv3.api.components.GenericGallery;
 import com.yosefario.nclientv3.api.enums.Language;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.activities.GeneralActivity;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.settings.TagV2;
 import com.yosefario.nclientv3.utility.ImageDownloadUtility;
@@ -103,6 +106,15 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
             holder.flag.setCompoundDrawableTintList(
                 android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
         } else holder.flag.setVisibility(View.GONE);
+        TextView sourceBadge = holder.itemView.findViewById(R.id.source_badge);
+        if (sourceBadge != null) {
+            if (Global.getEnabledSources().size() > 1) {
+                sourceBadge.setText(sourceLabel(ent.getSource()));
+                sourceBadge.setVisibility(View.VISIBLE);
+            } else {
+                sourceBadge.setVisibility(View.GONE);
+            }
+        }
         holder.title.setOnClickListener(v -> {
             Layout layout = holder.title.getLayout();
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
@@ -136,6 +148,12 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
         holder.title.setBackgroundColor(statusColor);
     }
 
+    private static String sourceLabel(SourceId source) {
+        if (source == SourceId.EHENTAI) return "EH";
+        if (source == SourceId.EXHENTAI) return "EX";
+        return "NH";
+    }
+
     public void updateColor(int id) {
         if (id < 0) return;
         int position = -1;
@@ -151,7 +169,7 @@ public class ListAdapter extends RecyclerView.Adapter<GenericAdapter.ViewHolder>
     }
 
     private void downloadGallery(final SimpleGallery ent) {
-        InspectorV3.galleryInspector(context, ent.getId(), new InspectorV3.DefaultInspectorResponse() {
+        InspectorV3.galleryInspector(context, ent.getId(), ent.getSource(), ent.getToken(), new InspectorV3.DefaultInspectorResponse() {
             @Override
             public void onFailure(Exception e) {
                 super.onFailure(e);
