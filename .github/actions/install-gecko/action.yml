@@ -1,0 +1,13 @@
+name: Install GeckoView
+description: Install the prebuilt GeckoView Maven repository and the pinned Android platform
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        curl -sSfL -o gecko-maven.tar.gz "https://github.com/${{ github.repository }}/releases/download/gecko-158.0.2/gecko-maven-158.0.2.tar.gz"
+        echo "f0ad84e90ae1b3bfcec777b7110e165debc63e56b56cdf3b76e9d91119126eb6  gecko-maven.tar.gz" | sha256sum -c
+        mkdir -p ~/.m2/repository
+        tar -xzf gecko-maven.tar.gz -C ~/.m2/repository
+        rm gecko-maven.tar.gz
+        gecko/platform.sh

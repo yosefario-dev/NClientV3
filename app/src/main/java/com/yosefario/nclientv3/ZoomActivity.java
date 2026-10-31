@@ -7,6 +7,8 @@ import android.annotation.TargetApi;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -21,6 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -41,7 +44,6 @@ import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.io.File;
 
 public class ZoomActivity extends GeneralActivity {
     @Override
@@ -344,7 +346,10 @@ public class ZoomActivity extends GeneralActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_zoom, menu);
-        Utility.tintMenu(menu);
+        for (int i = 0; i < menu.size(); i++) {
+            Drawable icon = menu.getItem(i).getIcon();
+            if (icon != null) DrawableCompat.setTint(icon.mutate(), Color.WHITE);
+        }
         return true;
     }
 
@@ -357,7 +362,7 @@ public class ZoomActivity extends GeneralActivity {
         if (id == R.id.rotate) {
             getActualFragment().rotate();
         } else if (id == R.id.save_page) {
-            if (Global.hasStoragePermission(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || Global.hasStoragePermission(this)) {
                 downloadPage();
             } else requestStorage();
         } else if (id == R.id.share) {
@@ -435,8 +440,10 @@ public class ZoomActivity extends GeneralActivity {
     }
 
     private void downloadPage() {
-        final File output = new File(Global.SCREENFOLDER, gallery.getId() + "-" + (mViewPager.getCurrentItem() + 1) + ".jpg");
-        Utility.saveImage(getActualFragment().getDrawable(), output);
+        ZoomFragment fragment = getActualFragment();
+        String name = gallery.getId() + "-" + (mViewPager.getCurrentItem() + 1) + ".jpg";
+        boolean saved = fragment != null && Utility.saveImageToDownloads(this, fragment.getDrawable(), name);
+        Toast.makeText(this, saved ? R.string.image_saved : R.string.image_save_failed, Toast.LENGTH_SHORT).show();
     }
 
     private void animateLayout() {

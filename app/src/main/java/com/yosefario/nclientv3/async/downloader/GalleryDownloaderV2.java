@@ -12,17 +12,22 @@ import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.api.InspectorV3;
 import com.yosefario.nclientv3.api.components.Gallery;
 import com.yosefario.nclientv3.api.local.LocalGallery;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiPageResolver;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.Utility;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
 
@@ -100,6 +105,8 @@ public class GalleryDownloaderV2 {
         Queries.DownloadTable.addGallery(this);
         if (start == -1) start = 0;
         if (end == -1) end = gallery.getPageCount() - 1;
+        initialized = false;
+        urls.clear();
     }
 
     private int getTotalPage() {
@@ -178,8 +185,12 @@ public class GalleryDownloaderV2 {
      * @return true if the download has been completed, false otherwise
      */
     public boolean downloadGalleryData() {
-        if (this.gallery != null) return true;
-        InspectorV3 inspector = InspectorV3.galleryInspector(context, id, null);
+        if (this.gallery != null && this.gallery.getSource() == SourceId.NHENTAI) return true;
+        SourceId source = this.gallery != null ? this.gallery.getSource() : SourceId.NHENTAI;
+        String token = this.gallery != null ? this.gallery.getToken() : null;
+        InspectorV3 inspector = source == SourceId.NHENTAI
+            ? InspectorV3.galleryInspector(context, id, null)
+            : InspectorV3.galleryInspector(context, id, source, token, null);
         try {
             if (!inspector.createDocument()) return false;
             inspector.parseDocument();
@@ -218,11 +229,23 @@ public class GalleryDownloaderV2 {
         }
     }
 
+    private static final int MAX_PAGE_ATTEMPTS = 5;
+
     public void download() {
         initDownload();
         onStart();
+        int attempts = 0;
         while (!urls.isEmpty()) {
-            downloadPage(urls.get(0));
+            PageContainer head = urls.get(0);
+            if (savePage(head)) {
+                urls.remove(head);
+                onUpdate();
+                attempts = 0;
+            } else if (++attempts >= MAX_PAGE_ATTEMPTS) {
+                urls.remove(head);
+                onUpdate();
+                attempts = 0;
+            }
             Utility.threadSleep(50);
             if (status == Status.PAUSED) {
                 onPause();
@@ -236,17 +259,13 @@ public class GalleryDownloaderV2 {
         onEnd();
     }
 
-    private void downloadPage(PageContainer page) {
-        if (savePage(page)) {
-            urls.remove(page);
-            onUpdate();
-        }
-    }
-
     private boolean isCorrupted(File file) {
         String path = file.getAbsolutePath();
         if (path.endsWith(".jpg") || path.endsWith(".jpeg")) {
             return Global.isJPEGCorrupted(path);
+        }
+        if (path.endsWith(".webp")) {
+            return isWebpTruncated(file);
         }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 256;
@@ -259,33 +278,78 @@ public class GalleryDownloaderV2 {
 
     private boolean savePage(PageContainer page) {
         if (page == null) return true;
-        File filePath = new File(folder, page.getPageName());
-        LogUtility.d("Saving into: " + filePath + "," + page.url);
+        String fetchUrl = page.url;
+        String pageName = page.getPageName();
+        if (gallery != null && gallery.getSource() != SourceId.NHENTAI) {
+            if (existingPageFile(page.page) != null) return true;
+            try {
+                fetchUrl = EHentaiPageResolver.resolveImageUrl(page.url);
+            } catch (IOException e) {
+                LogUtility.e(e, e);
+                return false;
+            }
+            if (fetchUrl == null) return false;
+            pageName = String.format(Locale.US, "%03d.%s", page.page, extFromUrl(fetchUrl, page.ext));
+        }
+        File filePath = new File(folder, pageName);
+        LogUtility.d("Saving into: " + filePath);
         if (filePath.exists() && !isCorrupted(filePath)) return true;
+        filePath.delete();
+        File tempPath = new File(folder, pageName + ".part");
+        tempPath.delete();
         try {
-            Response r = Global.getClient(context).newCall(new Request.Builder().url(page.url).build()).execute();
-            if (r.code() != 200) {
+            Response r = Global.getClient(context).newCall(new Request.Builder().url(fetchUrl).build()).execute();
+            if (r.code() != 200 || r.body() == null) {
                 r.close();
                 return false;
             }
-            assert r.body() != null;
-            long expectedSize = Integer.parseInt(r.header("Content-Length", "-1"));
-            long len = r.body().contentLength();
-            if (len < 0 || expectedSize != len) {
-                r.close();
-                return false;
-            }
-            long written = Utility.writeStreamToFile(r.body().byteStream(), filePath);
+            long declared = r.body().contentLength();
+            long written = Utility.writeStreamToFile(r.body().byteStream(), tempPath);
             r.close();
-            if (written != len) {
-                filePath.delete();
+            if (written <= 0 || (declared >= 0 && written != declared)) {
+                tempPath.delete();
+                return false;
+            }
+            if (isCorrupted(tempPath) || !tempPath.renameTo(filePath)) {
+                tempPath.delete();
                 return false;
             }
             return true;
         } catch (IOException | NumberFormatException e) {
+            tempPath.delete();
             LogUtility.e(e, e);
         }
         return false;
+    }
+
+    private boolean isWebpTruncated(File file) {
+        try (RandomAccessFile fh = new RandomAccessFile(file, "r")) {
+            long length = fh.length();
+            if (length < 12L) return true;
+            byte[] header = new byte[12];
+            fh.readFully(header);
+            if (header[0] != 'R' || header[1] != 'I' || header[2] != 'F' || header[3] != 'F'
+                || header[8] != 'W' || header[9] != 'E' || header[10] != 'B' || header[11] != 'P') {
+                return true;
+            }
+            long riffSize = (header[4] & 0xFFL) | ((header[5] & 0xFFL) << 8)
+                | ((header[6] & 0xFFL) << 16) | ((header[7] & 0xFFL) << 24);
+            return length < riffSize + 8L;
+        } catch (IOException e) {
+            return true;
+        }
+    }
+
+    private static String extFromUrl(String url, String fallback) {
+        String lower = url.toLowerCase(Locale.US);
+        int query = lower.indexOf('?');
+        if (query >= 0) lower = lower.substring(0, query);
+        if (lower.endsWith(".webp")) return "webp";
+        if (lower.endsWith(".png")) return "png";
+        if (lower.endsWith(".gif")) return "gif";
+        if (lower.endsWith(".jpeg")) return "jpg";
+        if (lower.endsWith(".jpg")) return "jpg";
+        return fallback;
     }
 
 
@@ -298,15 +362,39 @@ public class GalleryDownloaderV2 {
     }
 
     private void checkPages() {
-        File filePath;
+        Set<Integer> saved = savedPageNumbers();
         for (int i = 0; i < urls.size(); i++) {
-            if(urls.get(i)==null){
+            if (urls.get(i) == null || saved.contains(urls.get(i).page))
                 urls.remove(i--);
-                continue;
-            }
-            filePath = new File(folder, urls.get(i).getPageName());
-            if (filePath.exists() && !isCorrupted(filePath))
-                urls.remove(i--);
+        }
+    }
+
+    private Set<Integer> savedPageNumbers() {
+        Set<Integer> saved = new HashSet<>();
+        File[] files = folder == null ? null : folder.listFiles();
+        if (files == null) return saved;
+        for (File f : files) {
+            int page = pageNumberOf(f.getName());
+            if (page > 0 && f.isFile() && !isCorrupted(f)) saved.add(page);
+        }
+        return saved;
+    }
+
+    private File existingPageFile(int page) {
+        final String prefix = String.format(Locale.US, "%03d.", page);
+        File[] matches = folder == null ? null : folder.listFiles((dir, name) -> name.startsWith(prefix));
+        if (matches != null)
+            for (File f : matches) if (f.isFile() && !isCorrupted(f)) return f;
+        return null;
+    }
+
+    private static int pageNumberOf(String name) {
+        int dot = name.indexOf('.');
+        if (dot <= 0) return -1;
+        try {
+            return Integer.parseInt(name.substring(0, dot));
+        } catch (NumberFormatException e) {
+            return -1;
         }
     }
 

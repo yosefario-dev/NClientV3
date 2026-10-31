@@ -5,13 +5,56 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <HorizontalScrollView
+        android:id="@+id/favorite_filters"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:clipToPadding="false"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/source_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/list_chip"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:visibility="gone"
+                app:chipIcon="@drawable/ic_favorite"
+                app:chipIconVisible="true"
+                app:closeIcon="@drawable/ic_keyboard_arrow_down"
+                app:closeIconVisible="true" />
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/refresher"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/page_switcher"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/favorite_filters"
         app:layout_constraintVertical_bias="1.0">
 
         <androidx.recyclerview.widget.RecyclerView

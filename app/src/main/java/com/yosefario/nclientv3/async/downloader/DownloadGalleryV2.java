@@ -52,7 +52,7 @@ public class DownloadGalleryV2 extends JobIntentService {
         try {
             List<GalleryDownloaderManager> g = Queries.DownloadTable.getAllDownloads(context);
             for (GalleryDownloaderManager gg : g) {
-                gg.downloader().setStatus(GalleryDownloaderV2.Status.PAUSED);
+                gg.downloader().setStatus(GalleryDownloaderV2.Status.NOT_STARTED);
                 DownloadQueue.add(gg);
             }
             new PageChecker().start();

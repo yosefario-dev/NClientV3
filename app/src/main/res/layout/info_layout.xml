@@ -43,4 +43,30 @@
         android:textColor="?attr/colorOnSurface"
         app:drawableStartCompat="@drawable/ic_access_time"
         app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    <TextView
+        android:id="@+id/rating"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawablePadding="16dp"
+        android:gravity="center_vertical"
+        android:minHeight="40dp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurface"
+        android:visibility="gone"
+        app:drawableStartCompat="@drawable/ic_star"
+        app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+    <TextView
+        android:id="@+id/uploader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawablePadding="16dp"
+        android:gravity="center_vertical"
+        android:minHeight="40dp"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurface"
+        android:visibility="gone"
+        app:drawableStartCompat="@drawable/ic_person"
+        app:drawableTint="?attr/colorOnSurfaceVariant" />
 </LinearLayout>

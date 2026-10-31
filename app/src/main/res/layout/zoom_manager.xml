@@ -35,7 +35,8 @@
             android:paddingBottom="8dp"
             android:text="@string/page_placeholder"
             android:textAlignment="center"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="?android:attr/textColorPrimary" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -57,9 +58,11 @@
     </LinearLayout>
 
     <SeekBar
-
         android:id="@+id/seekBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp" />
+        android:layout_margin="24dp"
+        android:progressBackgroundTint="?android:attr/textColorSecondary"
+        android:progressTint="?android:attr/textColorPrimary"
+        android:thumbTint="?android:attr/textColorPrimary" />
 </LinearLayout>

@@ -26,6 +26,12 @@ public class User implements Parcelable {
     private int id;
     private String username, avatarUrl;
 
+    public User(int id, String username, String avatarUrl) {
+        this.id = id;
+        this.username = username;
+        this.avatarUrl = avatarUrl;
+    }
+
     public User(JsonReader reader) throws IOException {
         reader.beginObject();
         while (reader.peek() != JsonToken.END_OBJECT) {
@@ -70,6 +76,8 @@ public class User implements Parcelable {
     }
 
     public Uri getAvatarUrl() {
+        if (avatarUrl == null || avatarUrl.isEmpty()) return null;
+        if (avatarUrl.startsWith("http")) return Uri.parse(avatarUrl);
         return Uri.parse(String.format(Locale.US, "https://i.%s/%s", Utility.getHost(), avatarUrl));
     }
 

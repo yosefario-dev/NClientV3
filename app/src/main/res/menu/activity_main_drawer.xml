@@ -4,6 +4,10 @@
     tools:showIn="navigation_view">
     <group android:checkableBehavior="none">
         <item
+            android:id="@+id/sources"
+            android:icon="@drawable/ic_world"
+            android:title="@string/manage_sources" />
+        <item
             android:id="@+id/downloaded"
             android:icon="@drawable/ic_file"
             android:title="@string/downloaded_manga" />

@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.components.views.CFTokenView;
 import com.yosefario.nclientv3.settings.Global;
@@ -86,6 +87,13 @@ public abstract class GeneralActivity extends AppCompatActivity {
      */
     protected boolean applySystemBarInsets() {
         return true;
+    }
+
+    protected void setUpToolbar() {
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(v -> finish());
     }
 
     @Override

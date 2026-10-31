@@ -165,7 +165,7 @@ public class ZoomFragment extends Fragment {
             public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 applyDrawable(photoView, retryButton, resource);
                 if (resource instanceof Animatable)
-                    ((GifDrawable) resource).start();
+                    ((Animatable) resource).start();
             }
 
             @Override
@@ -192,8 +192,8 @@ public class ZoomFragment extends Fragment {
         cancelRequest();
         RequestBuilder<Drawable> dra = loadPage();
         if (dra == null) return;
+        if (degree != 0) dra = dra.transform(new Rotate(degree));
         dra
-            .transform(new Rotate(degree))
             .placeholder(R.drawable.ic_launcher_foreground)
             .error(R.drawable.ic_refresh)
             .priority(priority)

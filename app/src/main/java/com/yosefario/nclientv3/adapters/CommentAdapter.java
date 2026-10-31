@@ -58,7 +58,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         holder.close.setVisibility(c.getPosterId() != userId ? View.GONE : View.VISIBLE);
         holder.user.setText(c.getUsername());
         holder.body.setText(c.getComment());
-        holder.date.setText(format.format(c.getPostDate()));
+        String dateStr = format.format(c.getPostDate());
+        holder.date.setText(c.getScore() != 0
+            ? dateStr + "   " + (c.getScore() > 0 ? "+" : "") + c.getScore()
+            : dateStr);
         holder.close.setOnClickListener(v -> {
             int clickPos = holder.getBindingAdapterPosition();
             if (clickPos == RecyclerView.NO_POSITION) return;

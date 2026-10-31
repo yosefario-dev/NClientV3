@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.os.Build;
 
 import android.app.Application;
 
@@ -16,6 +17,8 @@ import com.google.android.material.color.DynamicColors;
 import com.yosefario.nclientv3.BuildConfig;
 import com.yosefario.nclientv3.R;
 import com.yosefario.nclientv3.api.local.LocalGallery;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiAuth;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiFavorites;
 import com.yosefario.nclientv3.async.ScrapeTags;
 import com.yosefario.nclientv3.async.database.DatabaseHelper;
 import com.yosefario.nclientv3.async.downloader.DownloadGalleryV2;
@@ -26,8 +29,10 @@ import com.yosefario.nclientv3.utility.LogUtility;
 import com.yosefario.nclientv3.utility.network.NetworkUtil;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -37,6 +42,7 @@ public class CrashApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        if (!isMainProcess()) return;
         Global.applyNightMode(this);
         Global.incrementLaunchCount(this);
         if (Global.isDynamicColorEnabled(this))
@@ -51,6 +57,8 @@ public class CrashApplication extends Application {
             afterUpdateChecks(preferences, version, actualVersion);
 
         Global.initFromShared(this);
+        EHentaiAuth.init(this);
+        EHentaiFavorites.init(this);
         NetworkUtil.initConnectivity(this);
         TagV2.initMinCount(this);
         TagV2.initSortByName(this);
@@ -120,5 +128,22 @@ public class CrashApplication extends Application {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(newBase);
+    }
+
+    private boolean isMainProcess() {
+        String name = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            name = Application.getProcessName();
+        } else {
+            try (FileInputStream in = new FileInputStream("/proc/self/cmdline")) {
+                byte[] buf = new byte[256];
+                int len = in.read(buf);
+                int end = 0;
+                while (end < len && buf[end] != 0) end++;
+                if (end > 0) name = new String(buf, 0, end, StandardCharsets.UTF_8);
+            } catch (IOException ignored) {
+            }
+        }
+        return name == null || name.equals(getPackageName());
     }
 }

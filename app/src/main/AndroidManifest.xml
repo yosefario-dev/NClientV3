@@ -146,6 +146,18 @@
                     android:host="nhentai.net"
                     android:pathPattern="/g/.*" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="e-hentai.org" />
+                <data android:host="exhentai.org" />
+                <data android:pathPrefix="/g/" />
+            </intent-filter>
 
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -221,6 +233,23 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.yosefario.nclientv3.MainActivity" />
         </activity>
+
+        <activity
+            android:name=".AccountActivity"
+            android:label="@string/accounts"
+            android:theme="@style/AppTheme"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.yosefario.nclientv3.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".EHentaiLoginActivity"
+            android:label="@string/eh_login_title"
+            android:theme="@style/AppTheme"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".AccountActivity" />
 
         <activity
             android:name=".ShareReceiverActivity"

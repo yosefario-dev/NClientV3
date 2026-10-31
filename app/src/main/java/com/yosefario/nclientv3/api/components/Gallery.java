@@ -17,6 +17,7 @@ import com.yosefario.nclientv3.api.enums.SpecialTagIds;
 import com.yosefario.nclientv3.api.enums.TagStatus;
 import com.yosefario.nclientv3.api.enums.TagType;
 import com.yosefario.nclientv3.api.enums.TitleType;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.classes.Size;
 import com.yosefario.nclientv3.files.GalleryFolder;
@@ -52,12 +53,12 @@ public class Gallery extends GenericGallery {
     private final GalleryData galleryData;
     @Nullable
     private final GalleryFolder folder;
-    private final boolean onlineFavorite;
+    private int favoriteSlot = -1;
     private List<SimpleGallery> related = new ArrayList<>();
     private Language language = Language.UNKNOWN;
     private Size maxSize = new Size(0, 0), minSize = new Size(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
-    public Gallery(Context context, String json, List<SimpleGallery> related, boolean isFavorite) throws IOException {
+    public Gallery(Context context, String json, List<SimpleGallery> related, int favoriteSlot) throws IOException {
         LogUtility.d("Found JSON: " + json);
         JsonReader reader = new JsonReader(new StringReader(json));
         this.related = related == null ? new ArrayList<>() : new ArrayList<>(related);
@@ -65,7 +66,7 @@ public class Gallery extends GenericGallery {
         folder = GalleryFolder.fromId(context, galleryData.getId());
         calculateSizes(galleryData);
         language = loadLanguage(getTags());
-        onlineFavorite = isFavorite;
+        this.favoriteSlot = favoriteSlot;
     }
 
     public Gallery(Cursor cursor, TagList tags) throws IOException {
@@ -76,12 +77,10 @@ public class Gallery extends GenericGallery {
         galleryData = new GalleryData(cursor, tags);
         folder = GalleryFolder.fromId(null, galleryData.getId());
         this.language = loadLanguage(tags);
-        onlineFavorite = false;
         LogUtility.d(toString());
     }
 
     private Gallery() {
-        onlineFavorite = false;
         galleryData = GalleryData.fakeData();
         folder = null;
     }
@@ -92,7 +91,7 @@ public class Gallery extends GenericGallery {
         galleryData = in.readParcelable(GalleryData.class.getClassLoader());
         folder = in.readParcelable(GalleryFolder.class.getClassLoader());
         in.readTypedList(related, SimpleGallery.CREATOR);
-        onlineFavorite = in.readByte() == 1;
+        favoriteSlot = in.readInt();
         language = loadLanguage(getTags());
     }
 
@@ -140,7 +139,15 @@ public class Gallery extends GenericGallery {
     }
 
     public boolean isOnlineFavorite() {
-        return onlineFavorite;
+        return favoriteSlot >= 0;
+    }
+
+    public int getFavoriteSlot() {
+        return favoriteSlot;
+    }
+
+    public void setFavoriteSlot(int favoriteSlot) {
+        this.favoriteSlot = favoriteSlot;
     }
 
     @NonNull
@@ -150,6 +157,8 @@ public class Gallery extends GenericGallery {
 
     public Uri getCover() {
         if (Global.getDownloadPolicy() == Global.DataUsageType.THUMBNAIL) return getThumbnail();
+        if (galleryData.getCoverUrl() != null && !galleryData.getCoverUrl().isEmpty())
+            return Uri.parse(galleryData.getCoverUrl());
         if (galleryData.getCover().getImageExt() == ImageExt.GIF) return getHighPage(0);
         Uri uri = getRemoteImageUri("t", galleryData.getCover().getPath());
         if (uri != null) return uri;
@@ -162,11 +171,25 @@ public class Gallery extends GenericGallery {
     }
 
     public Uri getThumbnail() {
+        if (galleryData.getCoverUrl() != null && !galleryData.getCoverUrl().isEmpty())
+            return Uri.parse(galleryData.getCoverUrl());
         if (galleryData.getCover().getImageExt() == ImageExt.GIF) return getHighPage(0);
         Uri uri = getRemoteImageUri("t", galleryData.getThumbnail().getPath());
         if (uri != null) return uri;
         String ext = galleryData.getThumbnail().extToString();
         return Uri.parse(String.format(Locale.US, "https://t." + Utility.getHost() + "/galleries/%d/thumb.%s", getMediaId(), ext));
+    }
+
+    @Nullable
+    public Uri getThumbnailFallback() {
+        if (getSource() != SourceId.NHENTAI) return null;
+        if (galleryData.getCoverUrl() != null && !galleryData.getCoverUrl().isEmpty()) return null;
+        String path = galleryData.getThumbnail().getPath();
+        if (path != null && !path.isEmpty()) return null;
+        ImageExt ext = galleryData.getThumbnail().getImageExt();
+        if (ext == ImageExt.GIF || galleryData.getCover().getImageExt() == ImageExt.GIF) return null;
+        String alternate = ext == ImageExt.WEBP ? "jpg" : "webp";
+        return Uri.parse(String.format(Locale.US, "https://t." + Utility.getHost() + "/galleries/%d/thumb.%s", getMediaId(), alternate));
     }
 
     @Nullable
@@ -272,9 +295,27 @@ public class Gallery extends GenericGallery {
         return galleryData.getFavoriteCount();
     }
 
+    public double getRating() {
+        return galleryData.getRating();
+    }
+
+    public String getUploader() {
+        return galleryData.getUploader();
+    }
+
     @Override
     public int getId() {
         return galleryData.getId();
+    }
+
+    @Override
+    public SourceId getSource() {
+        return galleryData.getSource();
+    }
+
+    @Override
+    public String getToken() {
+        return galleryData.getToken();
     }
 
     public TagList getTags() {
@@ -330,6 +371,10 @@ public class Gallery extends GenericGallery {
         writer.name("media_id").value(getMediaId());
         writer.name("upload_date").value(getUploadDate().getTime() / 1000);
         writer.name("num_favorites").value(getFavoriteCount());
+        writer.name("source").value(getSource().name());
+        if (getToken() != null) writer.name("token").value(getToken());
+        writer.name("rating").value(getRating());
+        if (getUploader() != null) writer.name("uploader").value(getUploader());
         toJsonTitle(writer);
         toJsonTags(writer);
 
@@ -370,7 +415,7 @@ public class Gallery extends GenericGallery {
         dest.writeParcelable(galleryData, flags);
         dest.writeParcelable(folder, flags);
         dest.writeTypedList(related);
-        dest.writeByte((byte) (onlineFavorite ? 1 : 0));
+        dest.writeInt(favoriteSlot);
     }
 
     @NonNull
@@ -381,7 +426,7 @@ public class Gallery extends GenericGallery {
             ", language=" + language +
             ", maxSize=" + maxSize +
             ", minSize=" + minSize +
-            ", onlineFavorite=" + onlineFavorite +
+            ", favoriteSlot=" + favoriteSlot +
             '}';
     }
 }

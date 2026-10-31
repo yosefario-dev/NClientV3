@@ -17,6 +17,7 @@ import com.yosefario.nclientv3.api.components.TagList;
 import com.yosefario.nclientv3.api.enums.ImageExt;
 import com.yosefario.nclientv3.api.enums.Language;
 import com.yosefario.nclientv3.api.enums.TagStatus;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.classes.Size;
 import com.yosefario.nclientv3.files.GalleryFolder;
@@ -47,6 +48,8 @@ public class SimpleGallery extends GenericGallery {
     private String thumbnailUrl; // raw thumbnail URL from HTML data-src
     private Language language = Language.UNKNOWN;
     private TagList tags;
+    private SourceId source = SourceId.NHENTAI;
+    private String token;
 
     public SimpleGallery(Parcel in) {
         title = in.readString();
@@ -56,6 +59,8 @@ public class SimpleGallery extends GenericGallery {
         language = Language.values()[in.readByte()];
         thumbnailUrl = in.readString();
         pageCount = in.readInt();
+        source = SourceId.values()[in.readByte()];
+        token = in.readString();
     }
 
     public boolean hasTag(Tag tag) {
@@ -72,6 +77,9 @@ public class SimpleGallery extends GenericGallery {
         mediaId = c.getInt(c.getColumnIndex(Queries.HistoryTable.MEDIAID));
         thumbnail = ImageExt.values()[c.getInt(c.getColumnIndex(Queries.HistoryTable.THUMB))];
         pageCount = 0;
+        source = Queries.readSource(c, Queries.HistoryTable.SOURCE);
+        token = Queries.readString(c, Queries.HistoryTable.TOKEN);
+        thumbnailUrl = Queries.readString(c, Queries.HistoryTable.THUMB_URL);
     }
 
     public SimpleGallery(Context context, Element e) {
@@ -103,7 +111,9 @@ public class SimpleGallery extends GenericGallery {
         mediaId = gallery.getMediaId();
         id = gallery.getId();
         thumbnail = gallery.getThumb();
-        thumbnailUrl = null; // will be reconstructed from mediaId + extension
+        source = gallery.getSource();
+        token = gallery.getToken();
+        thumbnailUrl = source == SourceId.NHENTAI ? null : gallery.getThumbnail().toString();
         pageCount = gallery.getPageCount();
     }
 
@@ -176,6 +186,24 @@ public class SimpleGallery extends GenericGallery {
     }
 
     @Override
+    public SourceId getSource() {
+        return source;
+    }
+
+    public void setSource(SourceId source) {
+        this.source = source;
+    }
+
+    @Override
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    @Override
     public int getPageCount() {
         return pageCount;
     }
@@ -215,6 +243,8 @@ public class SimpleGallery extends GenericGallery {
         dest.writeByte((byte) language.ordinal());
         dest.writeString(thumbnailUrl);
         dest.writeInt(pageCount);
+        dest.writeByte((byte) source.ordinal());
+        dest.writeString(token);
         //TAGS AREN'T WRITTEN
     }
 

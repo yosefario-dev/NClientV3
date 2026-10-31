@@ -23,7 +23,7 @@ import java.util.List;
 @SuppressWarnings("deprecation")
 public class DatabaseHelper extends SQLiteOpenHelper {
     static final String DATABASE_NAME = "Entries.db";
-    private static final int DATABASE_VERSION = 13;
+    private static final int DATABASE_VERSION = 16;
     private final Context context;
 
     public DatabaseHelper(Context context1) {
@@ -91,7 +91,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (oldVersion <= 10) db.execSQL(Queries.ResumeTable.CREATE_TABLE);
         if (oldVersion <= 11) updateFavoriteTable(db);
         if (oldVersion <= 12) addStatusTables(db);
+        if (oldVersion <= 13) addSourceColumns(db);
+        if (oldVersion <= 14) addHistorySourceColumns(db);
 
+    }
+
+    private void addHistorySourceColumns(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE History ADD COLUMN `source` TINYINT NOT NULL DEFAULT 0");
+        db.execSQL("ALTER TABLE History ADD COLUMN `token` TEXT");
+        db.execSQL("ALTER TABLE History ADD COLUMN `thumbUrl` TEXT");
+    }
+
+    private void addSourceColumns(SQLiteDatabase db) {
+        db.execSQL("ALTER TABLE Gallery ADD COLUMN `source` TINYINT NOT NULL DEFAULT 0");
+        db.execSQL("ALTER TABLE Gallery ADD COLUMN `token` TEXT");
+        db.execSQL("ALTER TABLE Gallery ADD COLUMN `cover` TEXT");
     }
 
     private void addStatusTables(SQLiteDatabase db) {

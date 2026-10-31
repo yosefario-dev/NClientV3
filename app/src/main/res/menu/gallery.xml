@@ -40,6 +40,11 @@
         android:title="@string/remove_from_online_favorites"
         app:showAsAction="never" />
     <item
+        android:id="@+id/online_favorite_category"
+        android:title="@string/favorite_category"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/manage_status"
         android:orderInCategory="550"
         android:title="@string/change_status"

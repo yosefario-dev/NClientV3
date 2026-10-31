@@ -37,6 +37,9 @@ import com.yosefario.nclientv3.api.enums.Language;
 import com.yosefario.nclientv3.api.enums.SortType;
 import com.yosefario.nclientv3.api.enums.TitleType;
 import com.yosefario.nclientv3.api.local.LocalSortType;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.SourceManager;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiAuthInterceptor;
 import com.yosefario.nclientv3.components.CustomCookieJar;
 import com.yosefario.nclientv3.components.classes.CustomSSLSocketFactory;
 import com.yosefario.nclientv3.utility.LogUtility;
@@ -52,8 +55,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import me.zhanghai.android.fastscroll.FastScrollerBuilder;
 import okhttp3.Cookie;
@@ -88,6 +93,8 @@ public class Global {
     private static ThemeScheme theme;
     private static DataUsageType usageMobile, usageWifi;
     private static String lastVersion, mirror;
+    private static Set<SourceId> enabledSources;
+    private static String favoriteSource;
     private static int maxHistory, columnCount, maxId, galleryWidth = -1, galleryHeight = -1;
     private static int colPortStat, colLandStat, colPortHist, colLandHist, colPortMain, colLandMain, colPortDownload, colLandDownload, colLandFavorite, colPortFavorite;
     private static boolean infiniteScrollMain, infiniteScrollFavorite, exactTagMatch, defaultFavoriteOnline, defaultFavoriteTabOnline;
@@ -308,6 +315,8 @@ public class Global {
     public static void initFromShared(@NonNull Context context) {
         SharedPreferences shared = context.getSharedPreferences("Settings", 0);
         mirror = shared.getString(context.getString(R.string.key_site_mirror), "");
+        enabledSources = loadEnabledSources(shared);
+        favoriteSource = shared.getString("favorite_source", null);
         Login.initLogin(context);
         CookieSyncManager.createInstance(context);
         initHttpClient(context);
@@ -401,7 +410,64 @@ public class Global {
     }
 
     public static boolean isSourceConfigured() {
-        return mirror != null && !mirror.isEmpty();
+        return enabledSources != null && !enabledSources.isEmpty();
+    }
+
+    private static Set<SourceId> loadEnabledSources(SharedPreferences shared) {
+        LinkedHashSet<SourceId> set = new LinkedHashSet<>();
+        String raw = shared.getString("enabled_sources", null);
+        if (raw != null) {
+            for (String name : raw.split(",")) {
+                if (name.isEmpty()) continue;
+                try {
+                    set.add(SourceId.valueOf(name));
+                } catch (IllegalArgumentException ignore) {
+                }
+            }
+        } else {
+            String m = mirror == null ? "" : mirror.toLowerCase(Locale.US);
+            if (m.contains("exhentai")) set.add(SourceId.EXHENTAI);
+            else if (m.contains("e-hentai") || m.contains("ehentai")) set.add(SourceId.EHENTAI);
+            else if (!m.isEmpty()) set.add(SourceId.NHENTAI);
+        }
+        return set;
+    }
+
+    public static Set<SourceId> getEnabledSources() {
+        LinkedHashSet<SourceId> ordered = new LinkedHashSet<>();
+        if (enabledSources != null)
+            for (SourceId id : SourceId.values())
+                if (enabledSources.contains(id)) ordered.add(id);
+        return ordered;
+    }
+
+    public static boolean isSourceEnabled(SourceId id) {
+        return enabledSources != null && enabledSources.contains(id);
+    }
+
+    public static void setEnabledSources(Context context, Set<SourceId> sources) {
+        enabledSources = new LinkedHashSet<>(sources);
+        StringBuilder sb = new StringBuilder();
+        for (SourceId id : enabledSources) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(id.name());
+        }
+        context.getSharedPreferences("Settings", 0).edit().putString("enabled_sources", sb.toString()).apply();
+    }
+
+    public static boolean isFavoriteSource(SourceId id) {
+        return id.name().equals(favoriteSource);
+    }
+
+    public static void setFavoriteSource(Context context, SourceId id) {
+        favoriteSource = id.name();
+        context.getSharedPreferences("Settings", 0).edit().putString("favorite_source", favoriteSource).apply();
+    }
+
+    public static SourceId getActiveSource() {
+        for (SourceId id : SourceId.values())
+            if (isSourceEnabled(id)) return id;
+        return SourceId.NHENTAI;
     }
 
     public static DataUsageType getDownloadPolicy() {
@@ -434,6 +500,7 @@ public class Global {
             );
         CustomSSLSocketFactory.enableTls12OnPreLollipop(builder);
         builder.addInterceptor(new CustomInterceptor(context.getApplicationContext(), true));
+        builder.addNetworkInterceptor(new EHentaiAuthInterceptor());
         client = builder.build();
         client.dispatcher().setMaxRequests(25);
         client.dispatcher().setMaxRequestsPerHost(25);
@@ -727,7 +794,9 @@ public class Global {
     }
 
     public static void shareGallery(Context context, GenericGallery gallery) {
-        shareURL(context, gallery.getTitle(), Utility.getBaseUrl() + "g/" + gallery.getId());
+        String url = SourceManager.get(gallery.getSource())
+            .buildGalleryUrl(gallery.getKey());
+        shareURL(context, gallery.getTitle(), url);
     }
 
     public static void setTint(Drawable drawable) {

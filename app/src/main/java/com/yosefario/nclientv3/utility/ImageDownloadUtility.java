@@ -79,6 +79,29 @@ public class ImageDownloadUtility {
         loadImageOp(activity, imageView, url, 0);
     }
 
+    public static void loadImage(Activity activity, Uri url, @Nullable Uri fallback, ImageView imageView) {
+        if (fallback == null) {
+            loadImageOp(activity, imageView, url, 0);
+            return;
+        }
+        if (Global.getDownloadPolicy() == Global.DataUsageType.NONE) {
+            loadLogo(imageView);
+            return;
+        }
+        RequestManager glide = GlideX.with(activity);
+        if (glide == null) return;
+        Drawable logo = Global.getLogo(activity.getResources());
+        glide.load(url)
+            .error(glide.load(fallback).error(logo))
+            .placeholder(logo)
+            .into(new ImageViewTarget<Drawable>(imageView) {
+                @Override
+                protected void setResource(@Nullable Drawable resource) {
+                    this.view.setImageDrawable(resource);
+                }
+            });
+    }
+
     public static void loadImage(Activity activity, File file, ImageView imageView) {
         loadImage(activity, file == null ? null : Uri.fromFile(file), imageView);
     }

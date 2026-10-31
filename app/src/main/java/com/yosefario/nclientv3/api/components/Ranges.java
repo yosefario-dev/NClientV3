@@ -25,6 +25,7 @@ public class Ranges implements Parcelable {
     };
     private int fromPage = UNDEFINED, toPage = UNDEFINED;
     private int fromDate = UNDEFINED, toDate = UNDEFINED;
+    private int minRating = UNDEFINED;
     private TimeUnit fromDateUnit = UNDEFINED_DATE, toDateUnit = UNDEFINED_DATE;
 
     public Ranges() {
@@ -40,11 +41,20 @@ public class Ranges implements Parcelable {
         fromDateUnit = date == -1 ? UNDEFINED_DATE : TimeUnit.values()[date];
         date = in.readInt();
         toDateUnit = date == -1 ? UNDEFINED_DATE : TimeUnit.values()[date];
+        minRating = in.readInt();
     }
 
     public boolean isDefault() {
         return fromDate == UNDEFINED && toDate == UNDEFINED
-            && toPage == UNDEFINED && fromPage == UNDEFINED;
+            && toPage == UNDEFINED && fromPage == UNDEFINED && minRating == UNDEFINED;
+    }
+
+    public int getMinRating() {
+        return minRating;
+    }
+
+    public void setMinRating(int minRating) {
+        this.minRating = minRating;
     }
 
     public int getFromPage() {
@@ -124,6 +134,7 @@ public class Ranges implements Parcelable {
         dest.writeInt(toDate);
         dest.writeInt(fromDateUnit == UNDEFINED_DATE ? -1 : fromDateUnit.ordinal());
         dest.writeInt(toDateUnit == UNDEFINED_DATE ? -1 : toDateUnit.ordinal());
+        dest.writeInt(minRating);
     }
 
     @Override

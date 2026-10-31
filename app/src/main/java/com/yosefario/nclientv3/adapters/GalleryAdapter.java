@@ -26,6 +26,7 @@ import com.yosefario.nclientv3.api.components.Tag;
 import com.yosefario.nclientv3.api.components.TagList;
 import com.yosefario.nclientv3.api.enums.SpecialTagIds;
 import com.yosefario.nclientv3.api.enums.TagType;
+import com.yosefario.nclientv3.api.source.SourceId;
 import com.yosefario.nclientv3.api.local.LocalGallery;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.components.classes.Size;
@@ -244,6 +245,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         commentsButton.setOnClickListener(v -> {
             Intent i = new Intent(context, CommentActivity.class);
             i.putExtra(context.getPackageName() + ".GALLERYID", gallery.getId());
+            i.putExtra(context.getPackageName() + ".SOURCE", gallery.getSource().ordinal());
+            i.putExtra(context.getPackageName() + ".TOKEN", gallery.getToken());
             context.startActivity(i);
         });
     }
@@ -258,8 +261,28 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 android.text.format.DateFormat.getTimeFormat(context).format(gallery.getUploadDate())
             ));
         text = holder.master.findViewById(R.id.favorite_count);
-        text.setText(context.getString(R.string.favorite_count_format, gallery.getFavoriteCount()));
+        if (gallery.getSource() == SourceId.NHENTAI) {
+            text.setText(context.getString(R.string.favorite_count_format, gallery.getFavoriteCount()));
+            text.setVisibility(View.VISIBLE);
+        } else {
+            text.setVisibility(View.GONE);
+        }
 
+        TextView rating = holder.master.findViewById(R.id.rating);
+        if (rating != null) {
+            if (gallery.getRating() > 0) {
+                rating.setText(context.getString(R.string.rating_format, gallery.getRating()));
+                rating.setVisibility(View.VISIBLE);
+            } else rating.setVisibility(View.GONE);
+        }
+        TextView uploader = holder.master.findViewById(R.id.uploader);
+        if (uploader != null) {
+            String name = gallery.getUploader();
+            if (name != null && !name.isEmpty()) {
+                uploader.setText(context.getString(R.string.uploader_format, name));
+                uploader.setVisibility(View.VISIBLE);
+            } else uploader.setVisibility(View.GONE);
+        }
     }
 
     public void setMaxImageSize(Size maxImageSize) {
@@ -327,7 +350,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return ImageView.ScaleType.FIT_CENTER;
         int index = pos - 1;
         GalleryData data = gallery.getGalleryData();
-        if (index < 0 || index >= data.getPageCount()) return ImageView.ScaleType.FIT_CENTER;
+        if (index < 0 || index >= data.getPages().size()) return ImageView.ScaleType.FIT_CENTER;
         Size page = data.getPage(index).getSize();
         double pw = page.getWidth(), ph = page.getHeight();
         double fw = maxImageSize.getWidth(), fh = maxImageSize.getHeight();
@@ -360,7 +383,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                     break;
                 case 3:
                     String name = String.format(Locale.US, "%d-%d.jpg", gallery.getId(), pos);
-                    Utility.saveImage(imgView.getDrawable(), new File(Global.SCREENFOLDER, name));
+                    boolean saved = Utility.saveImageToDownloads(context, imgView.getDrawable(), name);
+                    Toast.makeText(context, saved ? R.string.image_saved : R.string.image_save_failed, Toast.LENGTH_SHORT).show();
                     break;
             }
         }).show();

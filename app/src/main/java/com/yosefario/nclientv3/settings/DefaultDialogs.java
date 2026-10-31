@@ -13,11 +13,32 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 
 import com.yosefario.nclientv3.R;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.ehentai.EHentaiAuth;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.util.LinkedHashSet;
 import java.util.Locale;
 
 public class DefaultDialogs {
+    public static void showSourceSelector(Context context, Runnable onChanged) {
+        final SourceId[] all = {SourceId.NHENTAI, SourceId.EHENTAI};
+        final String[] labels = {"nhentai", "e-hentai"};
+        final boolean[] checked = new boolean[all.length];
+        for (int i = 0; i < all.length; i++) checked[i] = Global.isSourceEnabled(all[i]);
+        new MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.source_pick_title)
+            .setMultiChoiceItems(labels, checked, (d, which, isChecked) -> checked[which] = isChecked)
+            .setPositiveButton(R.string.ok, (d, w) -> {
+                LinkedHashSet<SourceId> set = new LinkedHashSet<>();
+                for (int i = 0; i < all.length; i++) if (checked[i]) set.add(all[i]);
+                Global.setEnabledSources(context, set);
+                if (onChanged != null) onChanged.run();
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
     public static void pageChangerDialog(final Builder builder) {
         MaterialAlertDialogBuilder build = new MaterialAlertDialogBuilder(builder.context);
         if (builder.title != 0) build.setTitle(builder.context.getString(builder.title));

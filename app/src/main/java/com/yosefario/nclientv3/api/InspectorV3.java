@@ -19,6 +19,13 @@ import com.yosefario.nclientv3.api.enums.SpecialTagIds;
 import com.yosefario.nclientv3.api.enums.TagStatus;
 import com.yosefario.nclientv3.api.enums.TagType;
 import com.yosefario.nclientv3.api.local.LocalGallery;
+import com.yosefario.nclientv3.api.source.GalleryKey;
+import com.yosefario.nclientv3.api.source.GalleryPayload;
+import com.yosefario.nclientv3.api.source.ListPayload;
+import com.yosefario.nclientv3.api.source.SearchRequest;
+import com.yosefario.nclientv3.api.source.Source;
+import com.yosefario.nclientv3.api.source.SourceId;
+import com.yosefario.nclientv3.api.source.SourceManager;
 import com.yosefario.nclientv3.async.database.Queries;
 import com.yosefario.nclientv3.settings.Global;
 import com.yosefario.nclientv3.utility.LogUtility;
@@ -58,7 +65,8 @@ public class InspectorV3 extends Thread implements Parcelable {
     };
     private SortType sortType;
     private boolean custom, forceStart = false;
-    private int page, pageCount = -1, id;
+    private int page, pageCount = -1, total = -1, id;
+    private final Set<String> mergeSeen = new HashSet<>();
     private String query, url;
     private ApiRequestType requestType;
     private Set<Tag> tags;
@@ -66,9 +74,11 @@ public class InspectorV3 extends Thread implements Parcelable {
     private Ranges ranges = null;
     private InspectorResponse response;
     private WeakReference<Context> context;
-    private NhentaiV2Api.GalleryPayload apiGalleryPayload;
-    private NhentaiV2Api.ListPayload apiListPayload;
+    private GalleryPayload apiGalleryPayload;
+    private ListPayload apiListPayload;
     private Document htmlDocument;
+    private SourceId singleSource;
+    private String singleToken;
 
     protected InspectorV3(Parcel in) {
         sortType = SortType.values()[in.readByte()];
@@ -94,6 +104,9 @@ public class InspectorV3 extends Thread implements Parcelable {
         galleries = (ArrayList<GenericGallery>) x;
         tags = new HashSet<>(in.createTypedArrayList(Tag.CREATOR));
         ranges = in.readParcelable(Ranges.class.getClassLoader());
+        String source = in.readString();
+        singleSource = source == null ? null : SourceId.valueOf(source);
+        singleToken = in.readString();
     }
 
     private InspectorV3(Context context, InspectorResponse response) {
@@ -109,6 +122,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         inspector.pageCount = 0;
         inspector.query = query == null ? "" : query;
         inspector.requestType = ApiRequestType.FAVORITE;
+        inspector.singleSource = SourceManager.favoriteSource().id();
         inspector.tags = new HashSet<>(1);
         inspector.createUrl();
         return inspector;
@@ -120,13 +134,20 @@ public class InspectorV3 extends Thread implements Parcelable {
     public static InspectorV3 randomInspector(Context context, InspectorResponse response, boolean favorite) {
         InspectorV3 inspector = new InspectorV3(context, response);
         inspector.requestType = favorite ? ApiRequestType.RANDOM_FAVORITE : ApiRequestType.RANDOM;
+        if (favorite) inspector.singleSource = SourceManager.favoriteSource().id();
         inspector.createUrl();
         return inspector;
     }
 
     public static InspectorV3 galleryInspector(Context context, int id, InspectorResponse response) {
+        return galleryInspector(context, id, null, null, response);
+    }
+
+    public static InspectorV3 galleryInspector(Context context, int id, SourceId source, String token, InspectorResponse response) {
         InspectorV3 inspector = new InspectorV3(context, response);
         inspector.id = id;
+        inspector.singleSource = source;
+        inspector.singleToken = token;
         inspector.requestType = ApiRequestType.BYSINGLE;
         inspector.createUrl();
         return inspector;
@@ -227,6 +248,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         dest.writeTypedList(galleries);
         dest.writeTypedList(new ArrayList<>(tags));
         dest.writeParcelable(ranges, flags);
+        dest.writeString(singleSource == null ? null : singleSource.name());
+        dest.writeString(singleToken);
     }
 
     public String getSearchTitle() {
@@ -256,6 +279,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         inspectorV3.id = id;
         inspectorV3.custom = custom;
         inspectorV3.ranges = ranges;
+        inspectorV3.singleSource = singleSource;
+        inspectorV3.singleToken = singleToken;
         return inspectorV3;
     }
 
@@ -320,34 +345,93 @@ public class InspectorV3 extends Thread implements Parcelable {
             createApiDocument();
             return true;
         } catch (IOException | RuntimeException e) {
+            boolean nhentaiActive = singleSource != null
+                ? singleSource == SourceId.NHENTAI
+                : SourceManager.active() != null && SourceManager.active().id() == SourceId.NHENTAI;
+            if (requestType == ApiRequestType.BYSINGLE || !nhentaiActive) {
+                if (e instanceof IOException) throw (IOException) e;
+                throw new IOException(e);
+            }
             LogUtility.e("API request failed; falling back to HTML scrape: " + url, e);
             return createHtmlDocument();
         }
     }
 
     private void createApiDocument() throws IOException {
-        NhentaiV2Api api = new NhentaiV2Api(context.get());
+        Source source = singleSource != null ? SourceManager.get(singleSource) : SourceManager.active();
+        Context ctx = context.get();
         if (requestType == ApiRequestType.BYSINGLE) {
-            apiGalleryPayload = api.fetchGalleryPayload(id);
+            apiGalleryPayload = source.fetchGallery(ctx, GalleryKey.of(source.id(), id, singleToken));
             return;
         }
         if (requestType == ApiRequestType.RANDOM) {
-            apiGalleryPayload = api.fetchRandomGalleryPayload();
+            apiGalleryPayload = source.fetchRandomGallery(ctx);
             id = apiGalleryPayload.getId();
             url = Utility.getBaseUrl() + "g/" + id;
             return;
         }
         if (requestType == ApiRequestType.RANDOM_FAVORITE) {
-            apiGalleryPayload = api.fetchRandomFavoriteGalleryPayload();
+            apiGalleryPayload = source.fetchRandomFavorite(ctx);
             id = apiGalleryPayload.getId();
             url = Utility.getBaseUrl() + "g/" + id;
             return;
         }
         if (requestType == ApiRequestType.FAVORITE) {
-            apiListPayload = api.fetchFavorites(createApiSearchQuery(), page);
+            apiListPayload = source.fetchFavorites(ctx, buildSearchRequest());
             return;
         }
-        apiListPayload = api.fetchGalleries(createApiSearchQuery(), page, sortType);
+        List<Source> sources = SourceManager.enabled();
+        if (sources.size() <= 1) {
+            apiListPayload = (sources.isEmpty() ? source : sources.get(0)).fetchGalleries(ctx, buildSearchRequest());
+            return;
+        }
+        SortType mergeSort = sortType;
+        for (Source src : sources) {
+            if (mergeSort != null && !src.capabilities().sortOptions().contains(mergeSort)) {
+                mergeSort = SortType.RECENT_ALL_TIME;
+                break;
+            }
+        }
+        SearchRequest mergeRequest = new SearchRequest(requestType, query, tags, ranges, page, mergeSort);
+        apiListPayload = mergeAcross(sources, src -> src.fetchGalleries(ctx, mergeRequest));
+    }
+
+    private interface Fetcher {
+        ListPayload fetch(Source source) throws IOException;
+    }
+
+    private ListPayload mergeAcross(List<Source> sources, Fetcher fetcher) throws IOException {
+        List<List<SimpleGallery>> perSource = new ArrayList<>();
+        int mergedPageCount = 1;
+        Exception lastError = null;
+        for (Source src : sources) {
+            try {
+                ListPayload payload = fetcher.fetch(src);
+                perSource.add(payload.getGalleries());
+                mergedPageCount = Math.max(mergedPageCount, payload.getPageCount());
+            } catch (Exception e) {
+                lastError = e;
+                LogUtility.e("Merge: source " + src.id() + " listing failed: " + e.getMessage(), e);
+            }
+        }
+        if (perSource.isEmpty() && lastError != null) {
+            if (lastError instanceof IOException) throw (IOException) lastError;
+            throw new IOException(lastError);
+        }
+        List<SimpleGallery> merged = new ArrayList<>();
+        for (int i = 0, added = 1; added > 0; i++) {
+            added = 0;
+            for (List<SimpleGallery> list : perSource)
+                if (i < list.size()) {
+                    merged.add(list.get(i));
+                    added++;
+                }
+        }
+        if (page <= 1) mergeSeen.clear();
+        List<SimpleGallery> mergedUnique = new ArrayList<>(merged.size());
+        for (SimpleGallery g : merged)
+            if (mergeSeen.add(g.getSource().ordinal() + ":" + g.getId())) mergedUnique.add(g);
+        return new ListPayload(mergedUnique, mergedPageCount, mergedUnique.size(), -1);
     }
 
     private boolean createHtmlDocument() throws IOException {
@@ -416,7 +500,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         for (GenericGallery gal : galleries) {
             assert gal instanceof SimpleGallery;
             SimpleGallery gallery = (SimpleGallery) gal;
-            if (gallery.hasTags(tags)) {
+            if (gallery.getSource() != SourceId.NHENTAI || gallery.hasTags(tags)) {
                 galleryTag.add(gallery);
             }
         }
@@ -424,9 +508,9 @@ public class InspectorV3 extends Thread implements Parcelable {
         galleries.addAll(galleryTag);
     }
 
-    private void doSingle(NhentaiV2Api.GalleryPayload galleryPayload) throws IOException {
+    private void doSingle(GalleryPayload galleryPayload) throws IOException {
         galleries = new ArrayList<>(1);
-        galleries.add(new Gallery(context.get(), galleryPayload.getJson(), galleryPayload.getRelated(), galleryPayload.isFavorite()));
+        galleries.add(new Gallery(context.get(), galleryPayload.getJson(), galleryPayload.getRelated(), galleryPayload.favoriteSlot()));
     }
 
     private void doSingle(Element document) throws IOException, InvalidResponseException {
@@ -449,7 +533,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         } catch (Exception e) {
             isFavorite = false;
         }
-        galleries.add(new Gallery(context.get(), json, related, isFavorite));
+        galleries.add(new Gallery(context.get(), json, related, isFavorite ? 0 : -1));
     }
 
     @Nullable
@@ -465,10 +549,11 @@ public class InspectorV3 extends Thread implements Parcelable {
         return json.isEmpty() ? null : json;
     }
 
-    private void doSearch(NhentaiV2Api.ListPayload payload) {
+    private void doSearch(ListPayload payload) {
         galleries = new ArrayList<>(payload.getGalleries().size());
         galleries.addAll(payload.getGalleries());
         pageCount = payload.getPageCount();
+        total = payload.getTotal();
         LogUtility.d("doSearch: API pageCount=" + pageCount + ", galleries parsed=" + galleries.size());
         if (Global.isExactTagMatch())
             filterDocumentTags();
@@ -481,6 +566,7 @@ public class InspectorV3 extends Thread implements Parcelable {
         for (Element e : gal) galleries.add(new SimpleGallery(context.get(), e));
         gal = document.getElementsByClass("last");
         pageCount = gal.size() == 0 ? Math.max(1, page) : findTotal(gal.last());
+        total = -1;
         LogUtility.d("doSearch fallback: pageCount=" + pageCount + ", galleries parsed=" + galleries.size());
         if (document.getElementById("content") == null && galleries.isEmpty())
             throw new InvalidResponseException();
@@ -497,25 +583,8 @@ public class InspectorV3 extends Thread implements Parcelable {
         }
     }
 
-    private String createApiSearchQuery() {
-        if (requestType == ApiRequestType.BYALL || requestType == ApiRequestType.RANDOM || requestType == ApiRequestType.RANDOM_FAVORITE)
-            return "";
-        StringBuilder builder = new StringBuilder();
-        appendApiSearchQuery(builder, query);
-        if (requestType == ApiRequestType.BYSEARCH || requestType == ApiRequestType.BYTAG) {
-            for (Tag tag : tags) {
-                if (tag == null || builder.toString().contains(tag.toQueryTag(TagStatus.ACCEPTED))) continue;
-                appendApiSearchQuery(builder, tag.toQueryTag());
-            }
-            if (ranges != null) appendApiSearchQuery(builder, ranges.toQuery());
-        }
-        return builder.toString().trim();
-    }
-
-    private void appendApiSearchQuery(StringBuilder builder, @Nullable String part) {
-        if (part == null || part.trim().isEmpty()) return;
-        if (builder.length() > 0) builder.append(' ');
-        builder.append(part.trim());
+    private SearchRequest buildSearchRequest() {
+        return new SearchRequest(requestType, query, tags, ranges, page, sortType);
     }
 
     public void setSortType(SortType sortType) {
@@ -542,6 +611,10 @@ public class InspectorV3 extends Thread implements Parcelable {
 
     public ApiRequestType getRequestType() {
         return requestType;
+    }
+
+    public int getTotal() {
+        return total;
     }
 
     public int getPageCount() {

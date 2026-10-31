@@ -11,6 +11,13 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
+        exclusiveContent {
+            forRepository { mavenLocal() }
+            filter {
+                includeGroup "org.mozilla.geckoview"
+                includeGroup "org.microg.gms"
+            }
+        }
     }
 }
 rootProject.name = "NClientV3"
